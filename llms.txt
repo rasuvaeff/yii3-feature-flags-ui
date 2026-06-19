@@ -1,0 +1,108 @@
+# yii3-feature-flags-ui
+
+Web admin panel for `rasuvaeff/yii3-feature-flags`. Provides Yii invokable route actions that list, create, edit, update and delete feature flags on top of `FlagProvider` (read model) and `WritableFlagProvider` (writes).
+
+Install:
+
+```
+composer require rasuvaeff/yii3-feature-flags-ui
+```
+
+Also requires `rasuvaeff/yii3-feature-flags` ^1.0 and a concrete provider (usually `rasuvaeff/yii3-feature-flags-db`) bound to `FlagProvider` + `WritableFlagProvider`, plus a router implementation (e.g. `yiisoft/router-fastroute`) supplied by the host app, and Bootstrap 5 CSS (views use Bootstrap classes, no inline styles). The list grid is a `GridView` (yiisoft/yii-dataview) rendered server-side by `Service\FlagsGridFactory` from the app DI container — no host-side `WidgetFactory` bootstrap needed. The edit view uses `yiisoft/html` widgets.
+
+## Rules
+
+- PHP 8.3+, `declare(strict_types=1)`.
+- No built-in access control — protect routes via `middlewares.all` in params.
+- Unknown name -> 404. Read-only provider (not `WritableFlagProvider`) rejects Update/Delete/Create -> 403.
+- Edit existing flags pins the route name; the submitted `name` field is ignored (prevents rename via form tampering).
+- Input is validated against `FlagFormRules`; invalid input re-renders the edit page with HTTP 200 and does not write.
+- `environments` field is a JSON array of strings; empty array or blank means all environments.
+- CSRF is the application middleware's job; the form emits a hidden `_csrf` field when a `csrf_token` request attribute is present.
+
+## Routes
+
+- GET  `{prefix}`              -> `Yii\List\Action`          (name: `flags/list`)
+- GET  `{prefix}/new`          -> `Yii\Edit\Action::new()`   (name: `flags/create`)
+- GET  `{prefix}/{name}/edit`  -> `Yii\Edit\Action`          (name: `flags/edit`)
+- POST `{prefix}/new`          -> `Yii\Update\Action::new()` (name: `flags/store`)
+- POST `{prefix}/{name}`       -> `Yii\Update\Action`        (name: `flags/update`)
+- POST `{prefix}/{name}/delete`-> `Yii\Delete\Action`        (name: `flags/delete`)
+
+Default `{prefix}` = `/admin/flags` (`FlagRoutes::PARAM_KEY.route_prefix`). Route names are overridable via `route_names`. URLs/redirects go through `Service\FlagUrls` (over `UrlGeneratorInterface`), not string concatenation. `RequestBodyParser` is added automatically to POST routes; set `'body_parser' => false` in params to opt out.
+
+**Flat-route wiring** — add to `configuration.php`:
+```php
+'routes' => 'vendor/rasuvaeff/yii3-feature-flags-ui/config/routes.php',
+```
+
+**Group-based admin panel** (most common):
+```php
+use Rasuvaeff\Yii3FeatureFlagsUi\FlagRoutes;
+Group::create(prefix: '/admin')->routes(...FlagRoutes::fromParams($params));
+```
+`fromParams()` keeps route registration and URL generation in sync automatically.
+
+For full control: `FlagRoutes::create(prefix, names, middlewares, withBodyParser)`.
+
+## Config (params)
+
+```php
+use Rasuvaeff\Yii3FeatureFlagsUi\FlagRoutes;
+
+FlagRoutes::PARAM_KEY => [
+    'route_prefix' => '/admin/flags',
+    'layout' => null,
+    'views' => ['list' => '/abs/path.php', 'edit' => '/abs/path.php'],
+    // Override only when your app uses a different naming convention:
+    'route_names' => ['list' => FlagRoutes::LIST, 'edit' => FlagRoutes::EDIT, ...],
+    'middlewares' => ['all' => [AuthMiddleware::class]],
+    // 'body_parser' => false,  // set if RequestBodyParser is already global
+],
+```
+
+`layout` controls the wrapper shell. `views.list` and `views.edit` override only the matching templates.
+
+## Form fields
+
+| Field | Type | Validation | Notes |
+|---|---|---|---|
+| `name` | text | regex `/^[a-z][a-z0-9._-]*$/` | On edit existing: disabled (route name pinned). On create: editable. |
+| `enabled` | checkbox | - | Master switch |
+| `rollout` | number 0..100 | int, range | Blank -> 100. Without user/tenant context, 100 = on for everyone |
+| `salt` | text | non-empty or blank | Blank falls back to the flag name. **Warning**: changing re-randomizes cohort |
+| `killSwitch` | checkbox | - | **Warning**: overrides rollout, targeting and forced values |
+| `environments` | textarea (JSON array) | `list<string>` | Blank/`[]` = all environments |
+
+## Public API
+
+- `FlagRoutes::fromParams(array $params): list<Route>` - build routes from `$params[FlagRoutes::PARAM_KEY]`; use inside a `Group`.
+- `FlagRoutes::create(prefix, names, middlewares, withBodyParser): list<Route>` - build the 6 routes with full control (constants `LIST`/`EDIT`/`CREATE`/`STORE`/`UPDATE`/`DELETE`).
+- `Yii\List\Action` - GET grid (sorted by name).
+- `Yii\Edit\Action` - GET edit existing; `::new()` for create form.
+- `Yii\Update\Action` - POST save existing; `::new()` for create.
+- `Yii\Delete\Action` - POST remove.
+- `Service\ListFlagsResponder` - builds the list response (read-model + grid).
+- `Service\EditFlagResponder` - renders edit/create form; 404 for unknown name.
+- `Service\UpdateFlagProcessor` - validates + saves; 403 for read-only, re-render on invalid.
+- `Service\DeleteFlagProcessor` - removes; 403 for read-only, 404 for unknown.
+- `Form\FlagForm` - a `Yiisoft\FormModel\FormModel` with `name`, `enabled`, `rollout`, `salt`, `killSwitch`, `environments`, `present`; `::fromParsedBody($body)`.
+- `Validation\FlagFormNormalizer::toFlag(FlagForm): Flag` - casts a validated form to a `Flag`.
+- `Renderer\TemplateRendererInterface::render(string $view, array $params): ResponseInterface`; `Renderer\ViewTemplateRenderer` (default, over `WebViewRenderer`).
+- `Event\FlagChanged` - `::saved($name,$actor)`, `::deleted($name,$actor)`; `OPERATION_SAVED` / `OPERATION_DELETED`. `actor` is the current user ID or `null` for guests.
+
+## Wiring example
+
+```php
+use Rasuvaeff\Yii3FeatureFlags\{FlagProvider, WritableFlagProvider};
+use Rasuvaeff\Yii3FeatureFlagsDb\DbFlagProvider;
+use Yiisoft\Definitions\Reference;
+
+return [
+    FlagProvider::class => DbFlagProvider::class,
+    WritableFlagProvider::class => Reference::to(FlagProvider::class),
+];
+```
+
+The package ships `config/di.php` (group `di`), `config/params.php`, `config/routes.php`.
+Routes may be decorated via params `middlewares.{all,list,edit,create,store,update,delete}` and templates may be overridden via `views.{list,edit}`.
