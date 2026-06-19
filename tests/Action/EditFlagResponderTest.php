@@ -38,8 +38,24 @@ final class EditFlagResponderTest extends ActionTestCase
         $this->assertFalse($renderer->parameters['isNew']);
         /** @var FlagForm $form */
         $form = $renderer->parameters['form'];
+        $this->assertFalse($form->present);
         $this->assertSame('checkout.v2', $form->name);
         $this->assertTrue($renderer->parameters['isWritable']);
+        $this->assertSame('/admin/flags/checkout.v2', $renderer->parameters['updateUrl']);
+        $this->assertSame('/admin/flags/checkout.v2/delete', $renderer->parameters['deleteUrl']);
+        $this->assertSame('/admin/flags', $renderer->parameters['listUrl']);
+    }
+
+    #[Test]
+    public function rendersExistingFlagEnvironmentsAsJson(): void
+    {
+        $renderer = new FakeTemplateRenderer($this->http);
+
+        $this->editResponder($renderer, $this->writableProvider())->respondExisting('search.beta');
+
+        /** @var FlagForm $form */
+        $form = $renderer->parameters['form'];
+        $this->assertSame('["prod","staging"]', $form->environments);
     }
 
     #[Test]
@@ -55,6 +71,31 @@ final class EditFlagResponderTest extends ActionTestCase
         $form = $renderer->parameters['form'];
         $this->assertSame('', $form->name);
         $this->assertNull($renderer->parameters['flag']);
+        $this->assertNull($renderer->parameters['deleteUrl']);
+        $this->assertSame('/admin/flags/new', $renderer->parameters['updateUrl']);
+        $this->assertSame('/admin/flags', $renderer->parameters['listUrl']);
+        $this->assertTrue($renderer->parameters['isWritable']);
+    }
+
+    #[Test]
+    public function newFormFlagsProviderAsReadOnlyWhenProviderNotWritable(): void
+    {
+        $renderer = new FakeTemplateRenderer($this->http);
+
+        $readOnlyProvider = new readonly class ($this->flags()) implements \Rasuvaeff\Yii3FeatureFlags\FlagProvider {
+            /** @param array<string, \Rasuvaeff\Yii3FeatureFlags\Flag> $flags */
+            public function __construct(private array $flags) {}
+
+            #[\Override]
+            public function getFlags(): array
+            {
+                return $this->flags;
+            }
+        };
+
+        $this->editResponder($renderer, $readOnlyProvider)->respondNew();
+
+        $this->assertFalse($renderer->parameters['isWritable']);
     }
 
     #[Test]

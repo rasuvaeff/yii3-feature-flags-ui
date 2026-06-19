@@ -123,6 +123,7 @@ final class UpdateFlagProcessorTest extends ActionTestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
         $this->assertSame('edit', $this->renderer->view);
         $this->assertNotNull($this->renderer->parameters['error']);
+        $this->assertStringContainsString('Rollout', $this->renderer->parameters['error']);
         $this->assertFalse($this->renderer->parameters['isNew']);
         $this->assertTrue($this->renderer->parameters['isWritable']);
         $this->assertSame([], $this->provider->saveCalls);
@@ -205,6 +206,34 @@ final class UpdateFlagProcessorTest extends ActionTestCase
         $this->assertSame('checkout.v2', $event->name);
         $this->assertSame(FlagChanged::OPERATION_SAVED, $event->operation);
         $this->assertSame('user-1', $event->actor);
+    }
+
+    #[Test]
+    public function dispatchesSavedEventWithNullActorWhenNoCurrentUser(): void
+    {
+        $processor = new UpdateFlagProcessor(
+            provider: $this->provider,
+            responseFactory: $this->http,
+            urls: $this->urls(),
+            editPage: $this->editPage($this->renderer),
+            validator: new Validator(),
+            normalizer: new FlagFormNormalizer(),
+            eventDispatcher: $this->events,
+        );
+
+        $processor->processExisting(
+            'checkout.v2',
+            $this->request('POST', parsedBody: ['Flag' => [
+                'name' => 'checkout.v2',
+                'enabled' => '1',
+                'rollout' => '100',
+            ]]),
+        );
+
+        $this->assertCount(1, $this->events->events);
+        /** @var FlagChanged $event */
+        $event = $this->events->events[0];
+        $this->assertNull($event->actor);
     }
 
     #[Test]

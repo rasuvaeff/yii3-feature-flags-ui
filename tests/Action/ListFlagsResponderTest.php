@@ -27,12 +27,18 @@ final class ListFlagsResponderTest extends ActionTestCase
         $this->assertArrayHasKey('flags', $renderer->parameters);
         $this->assertArrayHasKey('gridHtml', $renderer->parameters);
         $this->assertNotEmpty($renderer->parameters['gridHtml']);
+        $this->assertTrue($renderer->parameters['isWritable']);
+        $this->assertSame('/admin/flags/new', $renderer->parameters['createUrl']);
 
         /** @var list<FlagPresenter> $flags */
         $flags = $renderer->parameters['flags'];
         $names = array_map(static fn(FlagPresenter $f): string => $f->name, $flags);
         $this->assertContains('checkout.v2', $names);
         $this->assertContains('billing.maintenance', $names);
+
+        foreach ($flags as $flag) {
+            $this->assertTrue($flag->isWritable);
+        }
     }
 
     #[Test]
@@ -82,6 +88,14 @@ final class ListFlagsResponderTest extends ActionTestCase
         };
 
         $this->listResponder($renderer, $readOnlyProvider)->respond();
+
+        $this->assertFalse($renderer->parameters['isWritable']);
+
+        /** @var list<FlagPresenter> $flags */
+        $flags = $renderer->parameters['flags'];
+        foreach ($flags as $flag) {
+            $this->assertFalse($flag->isWritable);
+        }
 
         /** @var string $gridHtml */
         $gridHtml = $renderer->parameters['gridHtml'];

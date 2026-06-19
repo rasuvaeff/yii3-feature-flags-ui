@@ -34,6 +34,8 @@ final class FlagsGridFactoryTest extends TestCase
         $this->assertStringContainsString('Name', $html);
         $this->assertStringContainsString('Rollout', $html);
         $this->assertStringContainsString('Environments', $html);
+        $this->assertStringContainsString('<strong>feature.x</strong>', $html);
+        $this->assertStringContainsString('100%', $html);
     }
 
     #[Test]
@@ -43,6 +45,7 @@ final class FlagsGridFactoryTest extends TestCase
 
         $this->assertStringContainsString('KILLED', $html);
         $this->assertStringContainsString('text-bg-danger', $html);
+        $this->assertStringContainsString('<strong>billing</strong>', $html);
     }
 
     #[Test]
@@ -59,7 +62,7 @@ final class FlagsGridFactoryTest extends TestCase
     {
         $html = $this->factory->render([$this->presenter(name: 'x', writable: true)], true);
 
-        $this->assertStringContainsString('>all<', $html);
+        $this->assertStringContainsString('<span class="badge text-bg-info">all</span>', $html);
     }
 
     #[Test]
@@ -67,7 +70,7 @@ final class FlagsGridFactoryTest extends TestCase
     {
         $html = $this->factory->render([$this->presenter(name: 'x', environments: ['prod', 'staging'], writable: true)], true);
 
-        $this->assertStringContainsString('prod, staging', $html);
+        $this->assertStringContainsString('<span class="badge text-bg-info">prod, staging</span>', $html);
     }
 
     #[Test]
@@ -76,8 +79,17 @@ final class FlagsGridFactoryTest extends TestCase
         $html = $this->factory->render([$this->presenter(name: 'x', writable: true)], true);
 
         $this->assertStringContainsString('btn-outline-primary', $html);
+        $this->assertStringContainsString('href="/edit"', $html);
+        $this->assertStringNotContainsString('&lt;a', $html);
         $this->assertStringNotContainsString('btn-outline-danger', $html);
-        $this->assertStringNotContainsString('href="/delete"', $html);
+    }
+
+    #[Test]
+    public function rendersRolloutPercentageExactly(): void
+    {
+        $html = $this->factory->render([$this->presenter(name: 'x', rollout: 75, writable: true)], true);
+
+        $this->assertStringContainsString('75%', $html);
     }
 
     #[Test]
@@ -105,10 +117,11 @@ final class FlagsGridFactoryTest extends TestCase
         string $name,
         bool $enabled = true,
         bool $killSwitch = false,
+        int $rollout = 100,
         array $environments = [],
         bool $writable = true,
     ): FlagPresenter {
-        $flag = new Flag(name: $name, enabled: $enabled, killSwitch: $killSwitch, environments: $environments);
+        $flag = new Flag(name: $name, enabled: $enabled, killSwitch: $killSwitch, rollout: $rollout, environments: $environments);
 
         return new FlagPresenter(
             flag: $flag,

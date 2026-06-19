@@ -36,6 +36,7 @@ final class ViewRenderingTest extends TestCase
             'gridHtml' => '<table id="flags-grid"></table>',
         ]);
 
+        $this->assertStringContainsString('<!DOCTYPE html>', $html);
         $this->assertStringContainsString('<table id="flags-grid"></table>', $html);
         $this->assertStringContainsString('Feature flags', $html);
         $this->assertStringContainsString('href="/admin/flags/new"', $html);

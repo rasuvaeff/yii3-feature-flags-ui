@@ -142,6 +142,57 @@ final class FlagRoutesTest extends TestCase
     }
 
     #[Test]
+    public function eachRouteReceivesItsOwnSpecificMiddleware(): void
+    {
+        $list = static fn(): string => 'mw-list';
+        $create = static fn(): string => 'mw-create';
+        $edit = static fn(): string => 'mw-edit';
+        $store = static fn(): string => 'mw-store';
+        $update = static fn(): string => 'mw-update';
+        $delete = static fn(): string => 'mw-delete';
+
+        $routes = FlagRoutes::create(middlewares: [
+            'list' => [$list],
+            'create' => [$create],
+            'edit' => [$edit],
+            'store' => [$store],
+            'update' => [$update],
+            'delete' => [$delete],
+        ]);
+
+        $this->assertContains($list, $routes[0]->getData('enabledMiddlewares'));
+        $this->assertContains($create, $routes[1]->getData('enabledMiddlewares'));
+        $this->assertContains($edit, $routes[2]->getData('enabledMiddlewares'));
+
+        $storeMiddlewares = $routes[3]->getData('enabledMiddlewares');
+        $this->assertContains($store, $storeMiddlewares);
+        $this->assertNotContains($create, $storeMiddlewares);
+
+        $this->assertContains($update, $routes[4]->getData('enabledMiddlewares'));
+        $this->assertContains($delete, $routes[5]->getData('enabledMiddlewares'));
+    }
+
+    #[Test]
+    public function storeRouteFallsBackToCreateMiddlewareWhenStoreAbsent(): void
+    {
+        $create = static fn(): string => 'mw-create';
+
+        $routes = FlagRoutes::create(middlewares: ['create' => [$create]]);
+
+        $this->assertContains($create, $routes[3]->getData('enabledMiddlewares'));
+    }
+
+    #[Test]
+    public function acceptsArrayShapedMiddleware(): void
+    {
+        $arrayMiddleware = ['SomeMiddleware', 'process'];
+
+        $routes = FlagRoutes::create(middlewares: ['list' => [$arrayMiddleware]]);
+
+        $this->assertContains($arrayMiddleware, $routes[0]->getData('enabledMiddlewares'));
+    }
+
+    #[Test]
     public function fromParamsReadsConfigFromParamsArray(): void
     {
         $routes = FlagRoutes::fromParams([
