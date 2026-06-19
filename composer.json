@@ -47,7 +47,6 @@
         "maglnet/composer-require-checker": "^4.17",
         "nyholm/psr7": "^1.8",
         "phpunit/phpunit": "^11.5",
-        "psalm/plugin-phpunit": "^0.19",
         "rector/rector": "^2.4",
         "roave/backward-compatibility-check": "^8.0",
         "vimeo/psalm": "^6.16",

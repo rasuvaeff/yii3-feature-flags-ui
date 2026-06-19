@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Form;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rasuvaeff\Yii3FeatureFlagsUi\Form\FlagForm;
@@ -40,6 +41,11 @@ final class FlagFormTest extends TestCase
 
         $this->assertFalse($form->present);
         $this->assertSame('', $form->name);
+        $this->assertFalse($form->enabled);
+        $this->assertFalse($form->killSwitch);
+        $this->assertSame('100', $form->rollout);
+        $this->assertSame('', $form->salt);
+        $this->assertSame('', $form->environments);
     }
 
     #[Test]
@@ -80,5 +86,32 @@ final class FlagFormTest extends TestCase
         $this->assertArrayHasKey('name', $rules);
         $this->assertArrayHasKey('rollout', $rules);
         $this->assertArrayHasKey('environments', $rules);
+    }
+
+    #[Test]
+    #[DataProvider('checkboxProvider')]
+    public function checkboxFieldMapsKnownTruthyValues(mixed $value, bool $expected): void
+    {
+        $form = FlagForm::fromParsedBody(['Flag' => ['name' => 'x', 'enabled' => $value, 'killSwitch' => $value]]);
+
+        $this->assertSame($expected, $form->enabled);
+        $this->assertSame($expected, $form->killSwitch);
+    }
+
+    /**
+     * @return iterable<string, array{mixed, bool}>
+     */
+    public static function checkboxProvider(): iterable
+    {
+        yield 'bool true' => [true, true];
+        yield 'int 1' => [1, true];
+        yield 'string 1' => ['1', true];
+        yield 'string on' => ['on', true];
+        yield 'string true' => ['true', true];
+        yield 'bool false' => [false, false];
+        yield 'int 0' => [0, false];
+        yield 'string off' => ['off', false];
+        yield 'string yes' => ['yes', false];
+        yield 'null' => [null, false];
     }
 }

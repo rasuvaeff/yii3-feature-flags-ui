@@ -48,6 +48,24 @@ final class FlagFormRulesTest extends TestCase
         $this->assertFalse($this->validateField('name', $name)->isValid());
     }
 
+    #[Test]
+    public function emptyNameShowsRequiredMessage(): void
+    {
+        $result = $this->validateField('name', '');
+
+        $this->assertFalse($result->isValid());
+        $this->assertSame('Flag name is required', $result->getErrorMessages()[0]);
+    }
+
+    #[Test]
+    public function uppercaseNameShowsRegexMessage(): void
+    {
+        $result = $this->validateField('name', 'Checkout');
+
+        $this->assertFalse($result->isValid());
+        $this->assertStringContainsString('lowercase', $result->getErrorMessages()[0]);
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

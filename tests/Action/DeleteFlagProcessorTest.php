@@ -85,6 +85,24 @@ final class DeleteFlagProcessorTest extends ActionTestCase
     }
 
     #[Test]
+    public function dispatchesDeletedEventWithNullActorWhenNoCurrentUser(): void
+    {
+        $processor = new DeleteFlagProcessor(
+            provider: $this->provider,
+            responseFactory: $this->http,
+            urls: $this->urls(),
+            eventDispatcher: $this->events,
+        );
+
+        $processor->process('checkout.v2');
+
+        $this->assertCount(1, $this->events->events);
+        /** @var FlagChanged $event */
+        $event = $this->events->events[0];
+        $this->assertNull($event->actor);
+    }
+
+    #[Test]
     public function toleratesNullDispatcherAndCurrentUser(): void
     {
         $processor = new DeleteFlagProcessor(

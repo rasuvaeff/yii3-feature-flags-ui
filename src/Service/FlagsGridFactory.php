@@ -20,7 +20,6 @@ use Yiisoft\Yii\DataView\GridView\GridView;
  * keeps the host application from having to bootstrap `WidgetFactory`.
  *
  * @internal
- * @infection-ignore-all
  */
 final readonly class FlagsGridFactory
 {
