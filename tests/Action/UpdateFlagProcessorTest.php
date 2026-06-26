@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Action;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
 use Rasuvaeff\Yii3FeatureFlags\Flag;
 use Rasuvaeff\Yii3FeatureFlagsUi\Event\FlagChanged;
 use Rasuvaeff\Yii3FeatureFlagsUi\Http\Status;
@@ -14,10 +12,15 @@ use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\FakeTemplateRenderer;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\RecordingEventDispatcher;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\RecordingWritableProvider;
 use Rasuvaeff\Yii3FeatureFlagsUi\Validation\FlagFormNormalizer;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Lifecycle\BeforeTest;
+use Testo\Test;
 use Yiisoft\User\CurrentUser;
 use Yiisoft\Validator\Validator;
 
-#[CoversClass(UpdateFlagProcessor::class)]
+#[Test]
+#[Covers(UpdateFlagProcessor::class)]
 final class UpdateFlagProcessorTest extends ActionTestCase
 {
     private RecordingWritableProvider $provider;
@@ -26,8 +29,8 @@ final class UpdateFlagProcessorTest extends ActionTestCase
 
     private FakeTemplateRenderer $renderer;
 
-    #[\Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function setUp(): void
     {
         parent::setUp();
         $this->provider = new RecordingWritableProvider(flags: $this->flags());
@@ -35,7 +38,6 @@ final class UpdateFlagProcessorTest extends ActionTestCase
         $this->renderer = new FakeTemplateRenderer($this->http);
     }
 
-    #[Test]
     public function returns404ForUnknownName(): void
     {
         $response = $this->processor()->processExisting(
@@ -43,10 +45,9 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             $this->request('POST', parsedBody: ['Flag' => ['name' => 'nope', 'rollout' => '100']]),
         );
 
-        $this->assertSame(Status::NOT_FOUND, $response->getStatusCode());
+        Assert::same($response->getStatusCode(), Status::NOT_FOUND);
     }
 
-    #[Test]
     public function read_only_providerReturns403(): void
     {
         $readOnlyProvider = new readonly class ($this->flags()) implements \Rasuvaeff\Yii3FeatureFlags\FlagProvider {
@@ -71,10 +72,9 @@ final class UpdateFlagProcessorTest extends ActionTestCase
 
         $response = $processor->processExisting('checkout.v2', $this->request('POST', parsedBody: ['Flag' => ['name' => 'checkout.v2', 'rollout' => '100']]));
 
-        $this->assertSame(Status::FORBIDDEN, $response->getStatusCode());
+        Assert::same($response->getStatusCode(), Status::FORBIDDEN);
     }
 
-    #[Test]
     public function validFormSavesAndRedirects(): void
     {
         $response = $this->processor()->processExisting(
@@ -88,12 +88,11 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             ]]),
         );
 
-        $this->assertSame(Status::FOUND, $response->getStatusCode());
-        $this->assertSame('/admin/flags', $response->getHeaderLine('Location'));
-        $this->assertSame(['checkout.v2'], $this->provider->saveCalls);
+        Assert::same($response->getStatusCode(), Status::FOUND);
+        Assert::same($response->getHeaderLine('Location'), '/admin/flags');
+        Assert::same($this->provider->saveCalls, ['checkout.v2']);
     }
 
-    #[Test]
     public function ignoresSubmittedNameOnEditExisting(): void
     {
         $this->processor()->processExisting(
@@ -105,10 +104,9 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             ]]),
         );
 
-        $this->assertSame(['checkout.v2'], $this->provider->saveCalls);
+        Assert::same($this->provider->saveCalls, ['checkout.v2']);
     }
 
-    #[Test]
     public function invalidRolloutReRendersWithError(): void
     {
         $response = $this->processor()->processExisting(
@@ -120,16 +118,15 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             ]]),
         );
 
-        $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertSame('edit', $this->renderer->view);
-        $this->assertNotNull($this->renderer->parameters['error']);
-        $this->assertStringContainsString('Rollout', $this->renderer->parameters['error']);
-        $this->assertFalse($this->renderer->parameters['isNew']);
-        $this->assertTrue($this->renderer->parameters['isWritable']);
-        $this->assertSame([], $this->provider->saveCalls);
+        Assert::same($response->getStatusCode(), Status::OK);
+        Assert::same($this->renderer->view, 'edit');
+        Assert::notNull($this->renderer->parameters['error']);
+        Assert::string($this->renderer->parameters['error'])->contains('Rollout');
+        Assert::false($this->renderer->parameters['isNew']);
+        Assert::true($this->renderer->parameters['isWritable']);
+        Assert::same($this->provider->saveCalls, []);
     }
 
-    #[Test]
     public function invalidEnvironmentsReRendersWithError(): void
     {
         $response = $this->processor()->processExisting(
@@ -142,11 +139,10 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             ]]),
         );
 
-        $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertSame([], $this->provider->saveCalls);
+        Assert::same($response->getStatusCode(), Status::OK);
+        Assert::same($this->provider->saveCalls, []);
     }
 
-    #[Test]
     public function createNewFlagViaProcessNew(): void
     {
         $response = $this->processor()->processNew(
@@ -157,11 +153,10 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             ]]),
         );
 
-        $this->assertSame(Status::FOUND, $response->getStatusCode());
-        $this->assertSame(['feature.new'], $this->provider->saveCalls);
+        Assert::same($response->getStatusCode(), Status::FOUND);
+        Assert::same($this->provider->saveCalls, ['feature.new']);
     }
 
-    #[Test]
     public function invalidNameOnCreateReRenders(): void
     {
         $response = $this->processor()->processNew(
@@ -172,23 +167,21 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             ]]),
         );
 
-        $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertSame('edit', $this->renderer->view);
-        $this->assertTrue($this->renderer->parameters['isNew']);
-        $this->assertTrue($this->renderer->parameters['isWritable']);
-        $this->assertSame([], $this->provider->saveCalls);
+        Assert::same($response->getStatusCode(), Status::OK);
+        Assert::same($this->renderer->view, 'edit');
+        Assert::true($this->renderer->parameters['isNew']);
+        Assert::true($this->renderer->parameters['isWritable']);
+        Assert::same($this->provider->saveCalls, []);
     }
 
-    #[Test]
     public function absentBodyRedirects(): void
     {
         $response = $this->processor()->processExisting('checkout.v2', $this->request('POST'));
 
-        $this->assertSame(Status::FOUND, $response->getStatusCode());
-        $this->assertSame([], $this->provider->saveCalls);
+        Assert::same($response->getStatusCode(), Status::FOUND);
+        Assert::same($this->provider->saveCalls, []);
     }
 
-    #[Test]
     public function dispatchesSavedEventWithActor(): void
     {
         $this->processor(currentUser: $this->currentUser('user-1'))->processExisting(
@@ -200,15 +193,14 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             ]]),
         );
 
-        $this->assertCount(1, $this->events->events);
+        Assert::count($this->events->events, 1);
         $event = $this->events->events[0] ?? null;
-        $this->assertInstanceOf(FlagChanged::class, $event);
-        $this->assertSame('checkout.v2', $event->name);
-        $this->assertSame(FlagChanged::OPERATION_SAVED, $event->operation);
-        $this->assertSame('user-1', $event->actor);
+        Assert::instanceOf($event, FlagChanged::class);
+        Assert::same($event->name, 'checkout.v2');
+        Assert::same($event->operation, FlagChanged::OPERATION_SAVED);
+        Assert::same($event->actor, 'user-1');
     }
 
-    #[Test]
     public function dispatchesSavedEventWithNullActorWhenNoCurrentUser(): void
     {
         $processor = new UpdateFlagProcessor(
@@ -230,13 +222,12 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             ]]),
         );
 
-        $this->assertCount(1, $this->events->events);
+        Assert::count($this->events->events, 1);
         /** @var FlagChanged $event */
         $event = $this->events->events[0];
-        $this->assertNull($event->actor);
+        Assert::null($event->actor);
     }
 
-    #[Test]
     public function toleratesNullDispatcherAndCurrentUser(): void
     {
         $processor = new UpdateFlagProcessor(
@@ -257,9 +248,9 @@ final class UpdateFlagProcessorTest extends ActionTestCase
             ]]),
         );
 
-        $this->assertSame(Status::FOUND, $response->getStatusCode());
-        $this->assertSame(['checkout.v2'], $this->provider->saveCalls);
-        $this->assertSame([], $this->events->events);
+        Assert::same($response->getStatusCode(), Status::FOUND);
+        Assert::same($this->provider->saveCalls, ['checkout.v2']);
+        Assert::same($this->events->events, []);
     }
 
     private function processor(?CurrentUser $currentUser = null): UpdateFlagProcessor

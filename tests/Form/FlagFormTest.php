@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Form;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
 use Rasuvaeff\Yii3FeatureFlagsUi\Form\FlagForm;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Data\DataProvider;
+use Testo\Test;
 
-#[CoversClass(FlagForm::class)]
-final class FlagFormTest extends TestCase
+#[Test]
+#[Covers(FlagForm::class)]
+final class FlagFormTest
 {
-    #[Test]
     public function readsFlagFieldsFromScopedBody(): void
     {
         $form = FlagForm::fromParsedBody(['Flag' => [
@@ -25,82 +25,73 @@ final class FlagFormTest extends TestCase
             'environments' => '["prod"]',
         ]]);
 
-        $this->assertTrue($form->present);
-        $this->assertSame('checkout.v2', $form->name);
-        $this->assertTrue($form->enabled);
-        $this->assertSame('75', $form->rollout);
-        $this->assertSame('salt-1', $form->salt);
-        $this->assertTrue($form->killSwitch);
-        $this->assertSame('["prod"]', $form->environments);
+        Assert::true($form->present);
+        Assert::same($form->name, 'checkout.v2');
+        Assert::true($form->enabled);
+        Assert::same($form->rollout, '75');
+        Assert::same($form->salt, 'salt-1');
+        Assert::true($form->killSwitch);
+        Assert::same($form->environments, '["prod"]');
     }
 
-    #[Test]
     public function absentWhenBodyIsNotArray(): void
     {
         $form = FlagForm::fromParsedBody(null);
 
-        $this->assertFalse($form->present);
-        $this->assertSame('', $form->name);
-        $this->assertFalse($form->enabled);
-        $this->assertFalse($form->killSwitch);
-        $this->assertSame('100', $form->rollout);
-        $this->assertSame('', $form->salt);
-        $this->assertSame('', $form->environments);
+        Assert::false($form->present);
+        Assert::same($form->name, '');
+        Assert::false($form->enabled);
+        Assert::false($form->killSwitch);
+        Assert::same($form->rollout, '100');
+        Assert::same($form->salt, '');
+        Assert::same($form->environments, '');
     }
 
-    #[Test]
     public function absentWhenScopeMissing(): void
     {
         $form = FlagForm::fromParsedBody(['Other' => ['name' => 'x']]);
 
-        $this->assertFalse($form->present);
+        Assert::false($form->present);
     }
 
-    #[Test]
     public function uncheckedCheckboxesDefaultToFalse(): void
     {
         $form = FlagForm::fromParsedBody(['Flag' => ['name' => 'x', 'rollout' => '50']]);
 
-        $this->assertTrue($form->present);
-        $this->assertFalse($form->enabled);
-        $this->assertFalse($form->killSwitch);
+        Assert::true($form->present);
+        Assert::false($form->enabled);
+        Assert::false($form->killSwitch);
     }
 
-    #[Test]
     public function nonStringFieldsCoercedToString(): void
     {
         $form = FlagForm::fromParsedBody(['Flag' => ['name' => 'x', 'rollout' => 75, 'salt' => 123, 'environments' => false]]);
 
-        $this->assertSame('75', $form->rollout);
-        $this->assertSame('123', $form->salt);
-        $this->assertSame('', $form->environments);
+        Assert::same($form->rollout, '75');
+        Assert::same($form->salt, '123');
+        Assert::same($form->environments, '');
     }
 
-    #[Test]
     public function getRulesAreAlwaysBuilt(): void
     {
         $form = new FlagForm();
 
         $rules = [...$form->getRules()];
 
-        $this->assertArrayHasKey('name', $rules);
-        $this->assertArrayHasKey('rollout', $rules);
-        $this->assertArrayHasKey('environments', $rules);
+        Assert::true(array_key_exists('name', $rules));
+        Assert::true(array_key_exists('rollout', $rules));
+        Assert::true(array_key_exists('environments', $rules));
     }
 
-    #[Test]
     #[DataProvider('checkboxProvider')]
     public function checkboxFieldMapsKnownTruthyValues(mixed $value, bool $expected): void
     {
         $form = FlagForm::fromParsedBody(['Flag' => ['name' => 'x', 'enabled' => $value, 'killSwitch' => $value]]);
 
-        $this->assertSame($expected, $form->enabled);
-        $this->assertSame($expected, $form->killSwitch);
+        Assert::same($form->enabled, $expected);
+        Assert::same($form->killSwitch, $expected);
     }
 
-    /**
-     * @return iterable<string, array{mixed, bool}>
-     */
     public static function checkboxProvider(): iterable
     {
         yield 'bool true' => [true, true];

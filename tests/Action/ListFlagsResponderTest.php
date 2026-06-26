@@ -4,44 +4,44 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Action;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
 use Rasuvaeff\Yii3FeatureFlags\Flag;
 use Rasuvaeff\Yii3FeatureFlagsUi\Http\Status;
 use Rasuvaeff\Yii3FeatureFlagsUi\Service\ListFlagsResponder;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\FakeTemplateRenderer;
 use Rasuvaeff\Yii3FeatureFlagsUi\View\FlagPresenter;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Test;
 
-#[CoversClass(ListFlagsResponder::class)]
+#[Test]
+#[Covers(ListFlagsResponder::class)]
 final class ListFlagsResponderTest extends ActionTestCase
 {
-    #[Test]
     public function rendersFlagPresenterListAndGrid(): void
     {
         $renderer = new FakeTemplateRenderer($this->http);
 
         $response = $this->listResponder($renderer, $this->writableProvider())->respond();
 
-        $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertSame('list', $renderer->view);
-        $this->assertArrayHasKey('flags', $renderer->parameters);
-        $this->assertArrayHasKey('gridHtml', $renderer->parameters);
-        $this->assertNotEmpty($renderer->parameters['gridHtml']);
-        $this->assertTrue($renderer->parameters['isWritable']);
-        $this->assertSame('/admin/flags/new', $renderer->parameters['createUrl']);
+        Assert::same($response->getStatusCode(), Status::OK);
+        Assert::same($renderer->view, 'list');
+        Assert::true(array_key_exists('flags', $renderer->parameters));
+        Assert::true(array_key_exists('gridHtml', $renderer->parameters));
+        Assert::true($renderer->parameters['gridHtml'] !== '');
+        Assert::true($renderer->parameters['isWritable']);
+        Assert::same($renderer->parameters['createUrl'], '/admin/flags/new');
 
         /** @var list<FlagPresenter> $flags */
         $flags = $renderer->parameters['flags'];
         $names = array_map(static fn(FlagPresenter $f): string => $f->name, $flags);
-        $this->assertContains('checkout.v2', $names);
-        $this->assertContains('billing.maintenance', $names);
+        Assert::contains($names, 'checkout.v2');
+        Assert::contains($names, 'billing.maintenance');
 
         foreach ($flags as $flag) {
-            $this->assertTrue($flag->isWritable);
+            Assert::true($flag->isWritable);
         }
     }
 
-    #[Test]
     public function sortsFlagsByName(): void
     {
         $renderer = new FakeTemplateRenderer($this->http);
@@ -55,10 +55,9 @@ final class ListFlagsResponderTest extends ActionTestCase
         $expected = $names;
         sort($expected);
 
-        $this->assertSame($expected, $names);
+        Assert::same($names, $expected);
     }
 
-    #[Test]
     public function gridRendersKillSwitchBadge(): void
     {
         $renderer = new FakeTemplateRenderer($this->http);
@@ -67,11 +66,10 @@ final class ListFlagsResponderTest extends ActionTestCase
 
         /** @var string $gridHtml */
         $gridHtml = $renderer->parameters['gridHtml'];
-        $this->assertStringContainsString('KILLED', $gridHtml);
-        $this->assertStringContainsString('text-bg-danger', $gridHtml);
+        Assert::string($gridHtml)->contains('KILLED');
+        Assert::string($gridHtml)->contains('text-bg-danger');
     }
 
-    #[Test]
     public function gridHidesWriteControlsForReadOnlyProvider(): void
     {
         $renderer = new FakeTemplateRenderer($this->http);
@@ -89,17 +87,17 @@ final class ListFlagsResponderTest extends ActionTestCase
 
         $this->listResponder($renderer, $readOnlyProvider)->respond();
 
-        $this->assertFalse($renderer->parameters['isWritable']);
+        Assert::false($renderer->parameters['isWritable']);
 
         /** @var list<FlagPresenter> $flags */
         $flags = $renderer->parameters['flags'];
         foreach ($flags as $flag) {
-            $this->assertFalse($flag->isWritable);
+            Assert::false($flag->isWritable);
         }
 
         /** @var string $gridHtml */
         $gridHtml = $renderer->parameters['gridHtml'];
-        $this->assertStringNotContainsString('btn-outline-danger', $gridHtml);
-        $this->assertStringNotContainsString('btn-outline-primary', $gridHtml);
+        Assert::string($gridHtml)->notContains('btn-outline-danger');
+        Assert::string($gridHtml)->notContains('btn-outline-primary');
     }
 }

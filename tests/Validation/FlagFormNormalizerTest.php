@@ -4,85 +4,79 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Validation;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
 use Rasuvaeff\Yii3FeatureFlagsUi\Form\FlagForm;
 use Rasuvaeff\Yii3FeatureFlagsUi\Validation\FlagFormNormalizer;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Lifecycle\BeforeTest;
+use Testo\Test;
 
-#[CoversClass(FlagFormNormalizer::class)]
-final class FlagFormNormalizerTest extends TestCase
+#[Test]
+#[Covers(FlagFormNormalizer::class)]
+final class FlagFormNormalizerTest
 {
     private FlagFormNormalizer $normalizer;
 
-    #[\Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function setUp(): void
     {
         $this->normalizer = new FlagFormNormalizer();
     }
 
-    #[Test]
     public function castsStringRolloutToInt(): void
     {
         $flag = $this->normalizer->toFlag($this->form(rollout: '75'));
 
-        $this->assertSame(75, $flag->rollout);
+        Assert::same($flag->rollout, 75);
     }
 
-    #[Test]
     public function emptyRolloutFallsBackTo100(): void
     {
         $flag = $this->normalizer->toFlag($this->form(rollout: ''));
 
-        $this->assertSame(100, $flag->rollout);
+        Assert::same($flag->rollout, 100);
     }
 
-    #[Test]
     public function trimsRolloutWhitespace(): void
     {
         $flag = $this->normalizer->toFlag($this->form(rollout: ' 25 '));
 
-        $this->assertSame(25, $flag->rollout);
+        Assert::same($flag->rollout, 25);
     }
 
-    #[Test]
     public function whitespaceOnlyRolloutFallsBackTo100(): void
     {
         $flag = $this->normalizer->toFlag($this->form(rollout: '   '));
 
-        $this->assertSame(100, $flag->rollout);
+        Assert::same($flag->rollout, 100);
     }
 
-    #[Test]
     public function whitespaceOnlyEnvironmentsYieldsEmptyArray(): void
     {
         $flag = $this->normalizer->toFlag($this->form(environments: '   '));
 
-        $this->assertSame([], $flag->environments);
+        Assert::same($flag->environments, []);
     }
 
-    #[Test]
     public function emptySaltFallsBackToName(): void
     {
         $flag = $this->normalizer->toFlag($this->form(name: 'feature.x', salt: ''));
 
-        $this->assertSame('feature.x', $flag->salt);
+        Assert::same($flag->salt, 'feature.x');
     }
 
-    #[Test]
     public function emptyEnvironmentsYieldsEmptyArray(): void
     {
         $flag = $this->normalizer->toFlag($this->form(environments: ''));
 
-        $this->assertSame([], $flag->environments);
+        Assert::same($flag->environments, []);
     }
 
-    #[Test]
     public function jsonEnvironmentsDecodedToList(): void
     {
         $flag = $this->normalizer->toFlag($this->form(environments: '["prod", "staging"]'));
 
-        $this->assertSame(['prod', 'staging'], $flag->environments);
+        Assert::same($flag->environments, ['prod', 'staging']);
     }
 
     private function form(
