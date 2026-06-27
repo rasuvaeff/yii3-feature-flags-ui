@@ -4,39 +4,40 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Action;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
 use Rasuvaeff\Yii3FeatureFlagsUi\Event\FlagChanged;
 use Rasuvaeff\Yii3FeatureFlagsUi\Http\Status;
 use Rasuvaeff\Yii3FeatureFlagsUi\Service\DeleteFlagProcessor;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\RecordingEventDispatcher;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\RecordingWritableProvider;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Lifecycle\BeforeTest;
+use Testo\Test;
 use Yiisoft\User\CurrentUser;
 
-#[CoversClass(DeleteFlagProcessor::class)]
+#[Test]
+#[Covers(DeleteFlagProcessor::class)]
 final class DeleteFlagProcessorTest extends ActionTestCase
 {
     private RecordingWritableProvider $provider;
 
     private RecordingEventDispatcher $events;
 
-    #[\Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function setUp(): void
     {
         parent::setUp();
         $this->provider = new RecordingWritableProvider(flags: $this->flags());
         $this->events = new RecordingEventDispatcher();
     }
 
-    #[Test]
     public function returns404ForUnknownName(): void
     {
         $response = $this->processor()->process('nope');
 
-        $this->assertSame(Status::NOT_FOUND, $response->getStatusCode());
+        Assert::same($response->getStatusCode(), Status::NOT_FOUND);
     }
 
-    #[Test]
     public function read_only_providerReturns403(): void
     {
         $readOnlyProvider = new readonly class ($this->flags()) implements \Rasuvaeff\Yii3FeatureFlags\FlagProvider {
@@ -58,33 +59,30 @@ final class DeleteFlagProcessorTest extends ActionTestCase
 
         $response = $processor->process('checkout.v2');
 
-        $this->assertSame(Status::FORBIDDEN, $response->getStatusCode());
+        Assert::same($response->getStatusCode(), Status::FORBIDDEN);
     }
 
-    #[Test]
     public function deletesFlagAndRedirects(): void
     {
         $response = $this->processor()->process('checkout.v2');
 
-        $this->assertSame(Status::FOUND, $response->getStatusCode());
-        $this->assertSame('/admin/flags', $response->getHeaderLine('Location'));
-        $this->assertSame(['checkout.v2'], $this->provider->removeCalls);
+        Assert::same($response->getStatusCode(), Status::FOUND);
+        Assert::same($response->getHeaderLine('Location'), '/admin/flags');
+        Assert::same($this->provider->removeCalls, ['checkout.v2']);
     }
 
-    #[Test]
     public function dispatchesDeletedEventWithActor(): void
     {
         $this->processor(currentUser: $this->currentUser('user-1'))->process('checkout.v2');
 
-        $this->assertCount(1, $this->events->events);
+        Assert::count($this->events->events, 1);
         $event = $this->events->events[0] ?? null;
-        $this->assertInstanceOf(FlagChanged::class, $event);
-        $this->assertSame('checkout.v2', $event->name);
-        $this->assertSame(FlagChanged::OPERATION_DELETED, $event->operation);
-        $this->assertSame('user-1', $event->actor);
+        Assert::instanceOf($event, FlagChanged::class);
+        Assert::same($event->name, 'checkout.v2');
+        Assert::same($event->operation, FlagChanged::OPERATION_DELETED);
+        Assert::same($event->actor, 'user-1');
     }
 
-    #[Test]
     public function dispatchesDeletedEventWithNullActorWhenNoCurrentUser(): void
     {
         $processor = new DeleteFlagProcessor(
@@ -96,13 +94,12 @@ final class DeleteFlagProcessorTest extends ActionTestCase
 
         $processor->process('checkout.v2');
 
-        $this->assertCount(1, $this->events->events);
+        Assert::count($this->events->events, 1);
         /** @var FlagChanged $event */
         $event = $this->events->events[0];
-        $this->assertNull($event->actor);
+        Assert::null($event->actor);
     }
 
-    #[Test]
     public function toleratesNullDispatcherAndCurrentUser(): void
     {
         $processor = new DeleteFlagProcessor(
@@ -113,8 +110,8 @@ final class DeleteFlagProcessorTest extends ActionTestCase
 
         $response = $processor->process('checkout.v2');
 
-        $this->assertSame(Status::FOUND, $response->getStatusCode());
-        $this->assertSame(['checkout.v2'], $this->provider->removeCalls);
+        Assert::same($response->getStatusCode(), Status::FOUND);
+        Assert::same($this->provider->removeCalls, ['checkout.v2']);
     }
 
     private function processor(?CurrentUser $currentUser = null): DeleteFlagProcessor

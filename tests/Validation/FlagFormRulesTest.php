@@ -4,34 +4,32 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Validation;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
 use Rasuvaeff\Yii3FeatureFlagsUi\Validation\FlagFormRules;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Data\DataProvider;
+use Testo\Lifecycle\BeforeTest;
+use Testo\Test;
 use Yiisoft\Validator\Validator;
 
-#[CoversClass(FlagFormRules::class)]
-final class FlagFormRulesTest extends TestCase
+#[Test]
+#[Covers(FlagFormRules::class)]
+final class FlagFormRulesTest
 {
     private Validator $validator;
 
-    #[\Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function setUp(): void
     {
         $this->validator = new Validator();
     }
 
-    #[Test]
     #[DataProvider('validNameProvider')]
     public function acceptsValidName(string $name): void
     {
-        $this->assertTrue($this->validateField('name', $name)->isValid());
+        Assert::true($this->validateField('name', $name)->isValid());
     }
 
-    /**
-     * @return iterable<string, array{string}>
-     */
     public static function validNameProvider(): iterable
     {
         yield 'simple lowercase' => ['checkout'];
@@ -41,34 +39,28 @@ final class FlagFormRulesTest extends TestCase
         yield 'digits' => ['f.1.2'];
     }
 
-    #[Test]
     #[DataProvider('invalidNameProvider')]
     public function rejectsInvalidName(string $name): void
     {
-        $this->assertFalse($this->validateField('name', $name)->isValid());
+        Assert::false($this->validateField('name', $name)->isValid());
     }
 
-    #[Test]
     public function emptyNameShowsRequiredMessage(): void
     {
         $result = $this->validateField('name', '');
 
-        $this->assertFalse($result->isValid());
-        $this->assertSame('Flag name is required', $result->getErrorMessages()[0]);
+        Assert::false($result->isValid());
+        Assert::same($result->getErrorMessages()[0], 'Flag name is required');
     }
 
-    #[Test]
     public function uppercaseNameShowsRegexMessage(): void
     {
         $result = $this->validateField('name', 'Checkout');
 
-        $this->assertFalse($result->isValid());
-        $this->assertStringContainsString('lowercase', $result->getErrorMessages()[0]);
+        Assert::false($result->isValid());
+        Assert::string($result->getErrorMessages()[0])->contains('lowercase');
     }
 
-    /**
-     * @return iterable<string, array{string}>
-     */
     public static function invalidNameProvider(): iterable
     {
         yield 'uppercase' => ['Checkout'];
@@ -77,28 +69,22 @@ final class FlagFormRulesTest extends TestCase
         yield 'empty' => [''];
     }
 
-    #[Test]
     public function acceptsIntRollout(): void
     {
-        $this->assertTrue($this->validateField('rollout', 42)->isValid());
+        Assert::true($this->validateField('rollout', 42)->isValid());
     }
 
-    #[Test]
     public function rejectsNonStringNonIntRollout(): void
     {
-        $this->assertFalse($this->validateField('rollout', true)->isValid());
+        Assert::false($this->validateField('rollout', true)->isValid());
     }
 
-    #[Test]
     #[DataProvider('validRolloutProvider')]
     public function acceptsValidRollout(string $rollout): void
     {
-        $this->assertTrue($this->validateField('rollout', $rollout)->isValid());
+        Assert::true($this->validateField('rollout', $rollout)->isValid());
     }
 
-    /**
-     * @return iterable<string, array{string}>
-     */
     public static function validRolloutProvider(): iterable
     {
         yield 'zero' => ['0'];
@@ -107,16 +93,12 @@ final class FlagFormRulesTest extends TestCase
         yield 'with spaces' => [' 75 '];
     }
 
-    #[Test]
     #[DataProvider('invalidRolloutProvider')]
     public function rejectsInvalidRollout(string $rollout): void
     {
-        $this->assertFalse($this->validateField('rollout', $rollout)->isValid());
+        Assert::false($this->validateField('rollout', $rollout)->isValid());
     }
 
-    /**
-     * @return iterable<string, array{string}>
-     */
     public static function invalidRolloutProvider(): iterable
     {
         yield 'negative' => ['-1'];
@@ -126,16 +108,12 @@ final class FlagFormRulesTest extends TestCase
         yield 'float' => ['1.5'];
     }
 
-    #[Test]
     #[DataProvider('validEnvironmentsProvider')]
     public function acceptsValidEnvironments(string $environments): void
     {
-        $this->assertTrue($this->validateField('environments', $environments)->isValid());
+        Assert::true($this->validateField('environments', $environments)->isValid());
     }
 
-    /**
-     * @return iterable<string, array{string}>
-     */
     public static function validEnvironmentsProvider(): iterable
     {
         yield 'empty' => [''];
@@ -145,16 +123,12 @@ final class FlagFormRulesTest extends TestCase
         yield 'with spaces' => ['   '];
     }
 
-    #[Test]
     #[DataProvider('invalidEnvironmentsProvider')]
     public function rejectsInvalidEnvironments(string $environments): void
     {
-        $this->assertFalse($this->validateField('environments', $environments)->isValid());
+        Assert::false($this->validateField('environments', $environments)->isValid());
     }
 
-    /**
-     * @return iterable<string, array{string}>
-     */
     public static function invalidEnvironmentsProvider(): iterable
     {
         yield 'invalid json' => ['not-json'];

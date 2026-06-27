@@ -5,28 +5,29 @@ declare(strict_types=1);
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\View;
 
 use Nyholm\Psr7\Factory\Psr17Factory;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
 use Rasuvaeff\Yii3FeatureFlags\Flag;
 use Rasuvaeff\Yii3FeatureFlagsUi\Form\FlagForm;
 use Rasuvaeff\Yii3FeatureFlagsUi\Renderer\ViewTemplateRenderer;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Lifecycle\BeforeTest;
+use Testo\Test;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\View\WebView;
 use Yiisoft\Yii\View\Renderer\WebViewRenderer;
 
-#[CoversClass(ViewTemplateRenderer::class)]
-final class ViewRenderingTest extends TestCase
+#[Test]
+#[Covers(ViewTemplateRenderer::class)]
+final class ViewRenderingTest
 {
     private ViewTemplateRenderer $renderer;
 
-    #[\Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function setUp(): void
     {
         $this->renderer = $this->renderer();
     }
 
-    #[Test]
     public function listTemplateRendersGridHtmlAndCreateButton(): void
     {
         $html = $this->render('list', [
@@ -36,14 +37,13 @@ final class ViewRenderingTest extends TestCase
             'gridHtml' => '<table id="flags-grid"></table>',
         ]);
 
-        $this->assertStringContainsString('<!DOCTYPE html>', $html);
-        $this->assertStringContainsString('<table id="flags-grid"></table>', $html);
-        $this->assertStringContainsString('Feature flags', $html);
-        $this->assertStringContainsString('href="/admin/flags/new"', $html);
-        $this->assertStringContainsString('New flag', $html);
+        Assert::string($html)->contains('<!DOCTYPE html>');
+        Assert::string($html)->contains('<table id="flags-grid"></table>');
+        Assert::string($html)->contains('Feature flags');
+        Assert::string($html)->contains('href="/admin/flags/new"');
+        Assert::string($html)->contains('New flag');
     }
 
-    #[Test]
     public function listTemplateShowsReadOnlyBannerWhenProviderReadOnly(): void
     {
         $html = $this->render('list', [
@@ -53,10 +53,9 @@ final class ViewRenderingTest extends TestCase
             'gridHtml' => '',
         ]);
 
-        $this->assertStringContainsString('Read-only provider', $html);
+        Assert::string($html)->contains('Read-only provider');
     }
 
-    #[Test]
     public function editTemplateRendersFieldsAndValuesForExistingFlag(): void
     {
         $flag = new Flag(name: 'checkout.v2', enabled: true, salt: 'salt', rollout: 75, killSwitch: false, environments: ['prod']);
@@ -64,24 +63,22 @@ final class ViewRenderingTest extends TestCase
 
         $html = $this->render('edit', $this->editParams(form: $form, flag: $flag, isNew: false));
 
-        $this->assertStringContainsString('Edit flag', $html);
-        $this->assertStringContainsString('checkout.v2', $html);
-        $this->assertStringContainsString('75', $html);
-        $this->assertStringContainsString('["prod"]', $html);
+        Assert::string($html)->contains('Edit flag');
+        Assert::string($html)->contains('checkout.v2');
+        Assert::string($html)->contains('75');
+        Assert::string($html)->contains('["prod"]');
     }
 
-    #[Test]
     public function editTemplateRendersKillSwitchWarning(): void
     {
         $form = new FlagForm(present: false, name: 'x', killSwitch: true);
 
         $html = $this->render('edit', $this->editParams(form: $form, isNew: false));
 
-        $this->assertStringContainsString('Kill switch', $html);
-        $this->assertStringContainsString('Overrides rollout', $html);
+        Assert::string($html)->contains('Kill switch');
+        Assert::string($html)->contains('Overrides rollout');
     }
 
-    #[Test]
     public function editTemplateShowsValidationError(): void
     {
         $form = new FlagForm(present: true, name: 'x', rollout: 'abc');
@@ -90,10 +87,9 @@ final class ViewRenderingTest extends TestCase
 
         $html = $this->render('edit', $params);
 
-        $this->assertStringContainsString('Rollout must be an integer', $html);
+        Assert::string($html)->contains('Rollout must be an integer');
     }
 
-    #[Test]
     public function editTemplateShowsDeleteButtonForExistingWritableFlag(): void
     {
         $flag = new Flag(name: 'x');
@@ -101,21 +97,19 @@ final class ViewRenderingTest extends TestCase
 
         $html = $this->render('edit', $this->editParams(form: $form, flag: $flag, isNew: false));
 
-        $this->assertStringContainsString('Delete', $html);
+        Assert::string($html)->contains('Delete');
     }
 
-    #[Test]
     public function editTemplateOmitsDeleteButtonForNewFlag(): void
     {
         $form = new FlagForm(present: false);
 
         $html = $this->render('edit', $this->editParams(form: $form, isNew: true));
 
-        $this->assertStringNotContainsString('btn-outline-danger', $html);
-        $this->assertStringNotContainsString('formaction', $html);
+        Assert::string($html)->notContains('btn-outline-danger');
+        Assert::string($html)->notContains('formaction');
     }
 
-    #[Test]
     public function editTemplateDisablesFieldsWhenReadOnly(): void
     {
         $form = new FlagForm(present: false, name: 'x');
@@ -125,11 +119,10 @@ final class ViewRenderingTest extends TestCase
 
         $html = $this->render('edit', $params);
 
-        $this->assertStringContainsString('disabled', $html);
-        $this->assertStringContainsString('read-only', $html);
+        Assert::string($html)->contains('disabled');
+        Assert::string($html)->contains('read-only');
     }
 
-    #[Test]
     public function configuredListAndEditViewsOverrideDefaults(): void
     {
         $basePath = sys_get_temp_dir() . '/yii3-feature-flags-ui-' . bin2hex(random_bytes(4));
@@ -152,8 +145,8 @@ final class ViewRenderingTest extends TestCase
         $listHtml = (string) $renderer->render('list', ['flags' => [], 'isWritable' => true, 'createUrl' => '', 'gridHtml' => ''])->getBody();
         $editHtml = (string) $renderer->render('edit', $this->editParams())->getBody();
 
-        $this->assertStringContainsString('LIST OVERRIDE', $listHtml);
-        $this->assertStringContainsString('EDIT OVERRIDE', $editHtml);
+        Assert::string($listHtml)->contains('LIST OVERRIDE');
+        Assert::string($editHtml)->contains('EDIT OVERRIDE');
     }
 
     /**

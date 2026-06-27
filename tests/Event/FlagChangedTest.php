@@ -4,46 +4,43 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Event;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
 use Rasuvaeff\Yii3FeatureFlagsUi\Event\FlagChanged;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Test;
 
-#[CoversClass(FlagChanged::class)]
-final class FlagChangedTest extends TestCase
+#[Test]
+#[Covers(FlagChanged::class)]
+final class FlagChangedTest
 {
-    #[Test]
     public function savedCarriesNameAndActor(): void
     {
         $event = FlagChanged::saved(name: 'checkout.v2', actor: 'user-1');
 
-        $this->assertSame('checkout.v2', $event->name);
-        $this->assertSame(FlagChanged::OPERATION_SAVED, $event->operation);
-        $this->assertSame('user-1', $event->actor);
+        Assert::same($event->name, 'checkout.v2');
+        Assert::same($event->operation, FlagChanged::OPERATION_SAVED);
+        Assert::same($event->actor, 'user-1');
     }
 
-    #[Test]
     public function deletedCarriesNameAndActor(): void
     {
         $event = FlagChanged::deleted(name: 'checkout.v2', actor: 'user-1');
 
-        $this->assertSame(FlagChanged::OPERATION_DELETED, $event->operation);
-        $this->assertSame('user-1', $event->actor);
+        Assert::same($event->operation, FlagChanged::OPERATION_DELETED);
+        Assert::same($event->actor, 'user-1');
     }
 
-    #[Test]
     public function defaultsActorToNull(): void
     {
         $event = FlagChanged::saved(name: 'x');
 
-        $this->assertNull($event->actor);
+        Assert::null($event->actor);
     }
 
-    #[Test]
     public function constructorDefaults(): void
     {
         $event = new FlagChanged(name: 'x', operation: FlagChanged::OPERATION_SAVED);
 
-        $this->assertNull($event->actor);
+        Assert::null($event->actor);
     }
 }

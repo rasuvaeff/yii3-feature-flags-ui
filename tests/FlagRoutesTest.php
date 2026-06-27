@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
 use Rasuvaeff\Yii3FeatureFlagsUi\FlagRoutes;
 use Rasuvaeff\Yii3FeatureFlagsUi\Yii\Edit\Action as EditAction;
 use Rasuvaeff\Yii3FeatureFlagsUi\Yii\Update\Action as UpdateAction;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Test;
 use Yiisoft\Request\Body\RequestBodyParser;
 use Yiisoft\Router\Route;
 
-#[CoversClass(FlagRoutes::class)]
-final class FlagRoutesTest extends TestCase
+#[Test]
+#[Covers(FlagRoutes::class)]
+final class FlagRoutesTest
 {
-    #[Test]
     public function buildsRoutesWithDefaultNamesAndPrefix(): void
     {
         $routes = FlagRoutes::create();
 
-        $this->assertCount(6, $routes);
+        Assert::count($routes, 6);
 
         $list = $routes[0];
         $createEdit = $routes[1];
@@ -30,70 +30,65 @@ final class FlagRoutesTest extends TestCase
         $update = $routes[4];
         $delete = $routes[5];
 
-        $this->assertSame(FlagRoutes::LIST, $list->getData('name'));
-        $this->assertSame('/admin/flags', $list->getData('pattern'));
-        $this->assertSame(['GET'], $list->getData('methods'));
+        Assert::same($list->getData('name'), FlagRoutes::LIST);
+        Assert::same($list->getData('pattern'), '/admin/flags');
+        Assert::same($list->getData('methods'), ['GET']);
 
-        $this->assertSame(FlagRoutes::CREATE, $createEdit->getData('name'));
-        $this->assertSame('/admin/flags/new', $createEdit->getData('pattern'));
-        $this->assertSame(['GET'], $createEdit->getData('methods'));
+        Assert::same($createEdit->getData('name'), FlagRoutes::CREATE);
+        Assert::same($createEdit->getData('pattern'), '/admin/flags/new');
+        Assert::same($createEdit->getData('methods'), ['GET']);
 
-        $this->assertSame(FlagRoutes::EDIT, $edit->getData('name'));
-        $this->assertSame('/admin/flags/{name}/edit', $edit->getData('pattern'));
-        $this->assertSame(['GET'], $edit->getData('methods'));
+        Assert::same($edit->getData('name'), FlagRoutes::EDIT);
+        Assert::same($edit->getData('pattern'), '/admin/flags/{name}/edit');
+        Assert::same($edit->getData('methods'), ['GET']);
 
-        $this->assertSame(FlagRoutes::STORE, $createStore->getData('name'));
-        $this->assertSame('/admin/flags/new', $createStore->getData('pattern'));
-        $this->assertSame(['POST'], $createStore->getData('methods'));
+        Assert::same($createStore->getData('name'), FlagRoutes::STORE);
+        Assert::same($createStore->getData('pattern'), '/admin/flags/new');
+        Assert::same($createStore->getData('methods'), ['POST']);
 
-        $this->assertSame(FlagRoutes::UPDATE, $update->getData('name'));
-        $this->assertSame('/admin/flags/{name}', $update->getData('pattern'));
-        $this->assertSame(['POST'], $update->getData('methods'));
+        Assert::same($update->getData('name'), FlagRoutes::UPDATE);
+        Assert::same($update->getData('pattern'), '/admin/flags/{name}');
+        Assert::same($update->getData('methods'), ['POST']);
 
-        $this->assertSame(FlagRoutes::DELETE, $delete->getData('name'));
-        $this->assertSame('/admin/flags/{name}/delete', $delete->getData('pattern'));
-        $this->assertSame(['POST'], $delete->getData('methods'));
+        Assert::same($delete->getData('name'), FlagRoutes::DELETE);
+        Assert::same($delete->getData('pattern'), '/admin/flags/{name}/delete');
+        Assert::same($delete->getData('methods'), ['POST']);
     }
 
-    #[Test]
     public function createRoutesTargetNewActionMethods(): void
     {
         $routes = FlagRoutes::create();
 
-        $this->assertSame([EditAction::class, 'new'], $this->lastMiddleware($routes[1]));
-        $this->assertSame([UpdateAction::class, 'new'], $this->lastMiddleware($routes[3]));
+        Assert::same(self::lastMiddleware($routes[1]), [EditAction::class, 'new']);
+        Assert::same(self::lastMiddleware($routes[3]), [UpdateAction::class, 'new']);
     }
 
-    #[Test]
     public function getRoutesHaveNoExtraMiddlewaresByDefault(): void
     {
         $getRoutes = [FlagRoutes::create()[0], FlagRoutes::create()[1], FlagRoutes::create()[2]];
 
         foreach ($getRoutes as $route) {
-            $this->assertCount(1, $route->getData('enabledMiddlewares'));
+            Assert::count($route->getData('enabledMiddlewares'), 1);
         }
     }
 
-    #[Test]
     public function postRoutesHaveBodyParserByDefault(): void
     {
         $postRoutes = [FlagRoutes::create()[3], FlagRoutes::create()[4], FlagRoutes::create()[5]];
 
         foreach ($postRoutes as $route) {
             $middlewares = $route->getData('enabledMiddlewares');
-            $this->assertContains(RequestBodyParser::class, $middlewares);
+            Assert::contains($middlewares, RequestBodyParser::class);
         }
     }
 
-    #[Test]
     public function withBodyParserFalseSkipsBodyParser(): void
     {
         foreach (FlagRoutes::create(withBodyParser: false) as $route) {
-            $this->assertCount(1, $route->getData('enabledMiddlewares'));
+            Assert::count($route->getData('enabledMiddlewares'), 1);
         }
     }
 
-    #[Test]
     public function createAndStoreMiddlewaresAreAppliedToTheirOwnPostRoutes(): void
     {
         $create = static fn(): string => 'create';
@@ -108,13 +103,12 @@ final class FlagRoutesTest extends TestCase
         $storeMiddlewares = $routes[3]->getData('enabledMiddlewares');
         $updateMiddlewares = $routes[4]->getData('enabledMiddlewares');
 
-        $this->assertContains($create, $storeMiddlewares);
-        $this->assertNotContains($update, $storeMiddlewares);
-        $this->assertContains($update, $updateMiddlewares);
-        $this->assertNotContains($create, $updateMiddlewares);
+        Assert::contains($storeMiddlewares, $create);
+        Assert::false(in_array($update, $storeMiddlewares, true));
+        Assert::contains($updateMiddlewares, $update);
+        Assert::false(in_array($create, $updateMiddlewares, true));
     }
 
-    #[Test]
     public function appliesCustomPrefixAndNames(): void
     {
         $routes = FlagRoutes::create(
@@ -122,26 +116,24 @@ final class FlagRoutesTest extends TestCase
             names: ['list' => 'admin/flags', 'edit' => 'admin/flags/edit'],
         );
 
-        $this->assertSame('admin/flags', $routes[0]->getData('name'));
-        $this->assertSame('/flags', $routes[0]->getData('pattern'));
-        $this->assertSame('admin/flags/edit', $routes[2]->getData('name'));
-        $this->assertSame('/flags/{name}/edit', $routes[2]->getData('pattern'));
-        $this->assertSame(FlagRoutes::UPDATE, $routes[4]->getData('name'));
+        Assert::same($routes[0]->getData('name'), 'admin/flags');
+        Assert::same($routes[0]->getData('pattern'), '/flags');
+        Assert::same($routes[2]->getData('name'), 'admin/flags/edit');
+        Assert::same($routes[2]->getData('pattern'), '/flags/{name}/edit');
+        Assert::same($routes[4]->getData('name'), FlagRoutes::UPDATE);
     }
 
-    #[Test]
     public function attachesAllMiddlewareToEveryRoute(): void
     {
         $mw = static fn(): string => 'noop';
         $routes = FlagRoutes::create(middlewares: ['all' => [$mw]]);
 
         foreach ($routes as $route) {
-            $this->assertInstanceOf(Route::class, $route);
-            $this->assertContains($mw, $route->getData('enabledMiddlewares'));
+            Assert::instanceOf($route, Route::class);
+            Assert::contains($route->getData('enabledMiddlewares'), $mw);
         }
     }
 
-    #[Test]
     public function eachRouteReceivesItsOwnSpecificMiddleware(): void
     {
         $list = static fn(): string => 'mw-list';
@@ -160,39 +152,36 @@ final class FlagRoutesTest extends TestCase
             'delete' => [$delete],
         ]);
 
-        $this->assertContains($list, $routes[0]->getData('enabledMiddlewares'));
-        $this->assertContains($create, $routes[1]->getData('enabledMiddlewares'));
-        $this->assertContains($edit, $routes[2]->getData('enabledMiddlewares'));
+        Assert::contains($routes[0]->getData('enabledMiddlewares'), $list);
+        Assert::contains($routes[1]->getData('enabledMiddlewares'), $create);
+        Assert::contains($routes[2]->getData('enabledMiddlewares'), $edit);
 
         $storeMiddlewares = $routes[3]->getData('enabledMiddlewares');
-        $this->assertContains($store, $storeMiddlewares);
-        $this->assertNotContains($create, $storeMiddlewares);
+        Assert::contains($storeMiddlewares, $store);
+        Assert::false(in_array($create, $storeMiddlewares, true));
 
-        $this->assertContains($update, $routes[4]->getData('enabledMiddlewares'));
-        $this->assertContains($delete, $routes[5]->getData('enabledMiddlewares'));
+        Assert::contains($routes[4]->getData('enabledMiddlewares'), $update);
+        Assert::contains($routes[5]->getData('enabledMiddlewares'), $delete);
     }
 
-    #[Test]
     public function storeRouteFallsBackToCreateMiddlewareWhenStoreAbsent(): void
     {
         $create = static fn(): string => 'mw-create';
 
         $routes = FlagRoutes::create(middlewares: ['create' => [$create]]);
 
-        $this->assertContains($create, $routes[3]->getData('enabledMiddlewares'));
+        Assert::contains($routes[3]->getData('enabledMiddlewares'), $create);
     }
 
-    #[Test]
     public function acceptsArrayShapedMiddleware(): void
     {
         $arrayMiddleware = ['SomeMiddleware', 'process'];
 
         $routes = FlagRoutes::create(middlewares: ['list' => [$arrayMiddleware]]);
 
-        $this->assertContains($arrayMiddleware, $routes[0]->getData('enabledMiddlewares'));
+        Assert::contains($routes[0]->getData('enabledMiddlewares'), $arrayMiddleware);
     }
 
-    #[Test]
     public function fromParamsReadsConfigFromParamsArray(): void
     {
         $routes = FlagRoutes::fromParams([
@@ -203,36 +192,33 @@ final class FlagRoutesTest extends TestCase
             ],
         ]);
 
-        $this->assertSame('/my-flags', $routes[0]->getData('pattern'));
-        $this->assertSame('my/flags/list', $routes[0]->getData('name'));
-        // body_parser: false — POST routes have only the action
-        $this->assertCount(1, $routes[3]->getData('enabledMiddlewares'));
+        Assert::same($routes[0]->getData('pattern'), '/my-flags');
+        Assert::same($routes[0]->getData('name'), 'my/flags/list');
+        Assert::count($routes[3]->getData('enabledMiddlewares'), 1);
     }
 
-    #[Test]
     public function emptyStringNameFallsBackToDefault(): void
     {
         $routes = FlagRoutes::create(names: ['list' => '']);
 
-        $this->assertSame(FlagRoutes::LIST, $routes[0]->getData('name'));
+        Assert::same($routes[0]->getData('name'), FlagRoutes::LIST);
     }
 
-    #[Test]
     public function fromParamsUsesDefaultsWhenConfigIsEmpty(): void
     {
         $routes = FlagRoutes::fromParams([]);
 
-        $this->assertSame('/admin/flags', $routes[0]->getData('pattern'));
-        $this->assertSame(FlagRoutes::LIST, $routes[0]->getData('name'));
+        Assert::same($routes[0]->getData('pattern'), '/admin/flags');
+        Assert::same($routes[0]->getData('name'), FlagRoutes::LIST);
     }
 
-    private function lastMiddleware(Route $route): mixed
+    private static function lastMiddleware(Route $route): mixed
     {
         $middlewares = $route->getData('enabledMiddlewares');
         $last = array_key_last($middlewares);
 
         if ($last === null) {
-            self::fail('Route has no middleware action');
+            Assert::fail('Route has no middleware action');
         }
 
         return $middlewares[$last];

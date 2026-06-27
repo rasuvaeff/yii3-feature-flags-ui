@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Action;
 
 use Nyholm\Psr7\Factory\Psr17Factory;
-use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Rasuvaeff\Yii3FeatureFlags\Flag;
@@ -23,17 +22,18 @@ use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\FakeUrlGenerator;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\RecordingWritableProvider;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\TestContainer;
 use Rasuvaeff\Yii3FeatureFlagsUi\Validation\FlagFormNormalizer;
+use Testo\Lifecycle\BeforeTest;
 use Yiisoft\Auth\IdentityInterface;
 use Yiisoft\Auth\IdentityRepositoryInterface;
 use Yiisoft\User\CurrentUser;
 use Yiisoft\Validator\Validator;
 
-abstract class ActionTestCase extends TestCase
+abstract class ActionTestCase
 {
     protected Psr17Factory $http;
 
-    #[\Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function setUp(): void
     {
         $this->http = new Psr17Factory();
     }
@@ -96,7 +96,13 @@ abstract class ActionTestCase extends TestCase
             validator: new Validator(),
             normalizer: new FlagFormNormalizer(),
             currentUser: $currentUser ?? $this->currentUser(null),
-            eventDispatcher: $eventDispatcher ?? $this->createMock(EventDispatcherInterface::class),
+            eventDispatcher: $eventDispatcher ?? new class implements EventDispatcherInterface {
+                #[\Override]
+                public function dispatch(object $event): object
+                {
+                    return $event;
+                }
+            },
         );
     }
 
@@ -110,15 +116,33 @@ abstract class ActionTestCase extends TestCase
             responseFactory: $this->http,
             urls: $this->urls(),
             currentUser: $currentUser ?? $this->currentUser(null),
-            eventDispatcher: $eventDispatcher ?? $this->createMock(EventDispatcherInterface::class),
+            eventDispatcher: $eventDispatcher ?? new class implements EventDispatcherInterface {
+                #[\Override]
+                public function dispatch(object $event): object
+                {
+                    return $event;
+                }
+            },
         );
     }
 
     protected function currentUser(?string $id): CurrentUser
     {
         $currentUser = new CurrentUser(
-            identityRepository: $this->createMock(IdentityRepositoryInterface::class),
-            eventDispatcher: $this->createMock(EventDispatcherInterface::class),
+            identityRepository: new class implements IdentityRepositoryInterface {
+                #[\Override]
+                public function findIdentity(string $id): ?IdentityInterface
+                {
+                    return null;
+                }
+            },
+            eventDispatcher: new class implements EventDispatcherInterface {
+                #[\Override]
+                public function dispatch(object $event): object
+                {
+                    return $event;
+                }
+            },
         );
 
         if ($id !== null) {

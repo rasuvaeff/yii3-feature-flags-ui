@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Yii\Edit;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
 use Rasuvaeff\Yii3FeatureFlagsUi\Form\FlagForm;
 use Rasuvaeff\Yii3FeatureFlagsUi\Http\Status;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Action\ActionTestCase;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\FakeTemplateRenderer;
 use Rasuvaeff\Yii3FeatureFlagsUi\Yii\Edit\Action as YiiEditAction;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Test;
 
-#[CoversClass(YiiEditAction::class)]
+#[Test]
+#[Covers(YiiEditAction::class)]
 final class ActionTest extends ActionTestCase
 {
-    #[Test]
     public function invokesRespondExistingWithRouteArgument(): void
     {
         $renderer = new FakeTemplateRenderer($this->http);
@@ -25,14 +26,13 @@ final class ActionTest extends ActionTestCase
 
         $response = $action->__invoke('checkout.v2');
 
-        $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertSame('edit', $renderer->view);
+        Assert::same($response->getStatusCode(), Status::OK);
+        Assert::same($renderer->view, 'edit');
         /** @var FlagForm $form */
         $form = $renderer->parameters['form'];
-        $this->assertSame('checkout.v2', $form->name);
+        Assert::same($form->name, 'checkout.v2');
     }
 
-    #[Test]
     public function newActionInvokesRespondNew(): void
     {
         $renderer = new FakeTemplateRenderer($this->http);
@@ -42,7 +42,7 @@ final class ActionTest extends ActionTestCase
 
         $response = $action->new();
 
-        $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertTrue($renderer->parameters['isNew']);
+        Assert::same($response->getStatusCode(), Status::OK);
+        Assert::true($renderer->parameters['isNew']);
     }
 }

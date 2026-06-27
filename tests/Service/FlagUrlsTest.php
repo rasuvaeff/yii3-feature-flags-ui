@@ -4,31 +4,30 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Service;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
 use Rasuvaeff\Yii3FeatureFlagsUi\FlagRoutes;
 use Rasuvaeff\Yii3FeatureFlagsUi\Service\FlagUrls;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\FakeUrlGenerator;
 use Stringable;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Test;
 use Yiisoft\Router\UrlGeneratorInterface;
 
-#[CoversClass(FlagUrls::class)]
-final class FlagUrlsTest extends TestCase
+#[Test]
+#[Covers(FlagUrls::class)]
+final class FlagUrlsTest
 {
-    #[Test]
     public function generatesUrlsForDefaultRouteNames(): void
     {
         $urls = new FlagUrls(urlGenerator: new FakeUrlGenerator());
 
-        $this->assertSame('/admin/flags', $urls->list());
-        $this->assertSame('/admin/flags/new', $urls->create());
-        $this->assertSame('/admin/flags/checkout.v2/edit', $urls->edit('checkout.v2'));
-        $this->assertSame('/admin/flags/checkout.v2', $urls->update('checkout.v2'));
-        $this->assertSame('/admin/flags/checkout.v2/delete', $urls->delete('checkout.v2'));
+        Assert::same($urls->list(), '/admin/flags');
+        Assert::same($urls->create(), '/admin/flags/new');
+        Assert::same($urls->edit('checkout.v2'), '/admin/flags/checkout.v2/edit');
+        Assert::same($urls->update('checkout.v2'), '/admin/flags/checkout.v2');
+        Assert::same($urls->delete('checkout.v2'), '/admin/flags/checkout.v2/delete');
     }
 
-    #[Test]
     public function forwardsConfiguredRouteNamesToGenerator(): void
     {
         $recorder = new class implements UrlGeneratorInterface {
@@ -77,9 +76,9 @@ final class FlagUrlsTest extends TestCase
         $urls->edit('k');
         $urls->update('k');
 
-        $this->assertSame(
-            ['admin/flags', 'admin/flags/edit', FlagRoutes::UPDATE],
+        Assert::same(
             $recorder->names,
+            ['admin/flags', 'admin/flags/edit', FlagRoutes::UPDATE],
         );
     }
 }

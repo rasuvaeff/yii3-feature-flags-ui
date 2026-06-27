@@ -4,115 +4,105 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Service;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
 use Rasuvaeff\Yii3FeatureFlags\Flag;
 use Rasuvaeff\Yii3FeatureFlagsUi\Service\FlagsGridFactory;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\TestContainer;
 use Rasuvaeff\Yii3FeatureFlagsUi\View\FlagPresenter;
+use Testo\Assert;
+use Testo\Codecov\Covers;
+use Testo\Lifecycle\BeforeTest;
+use Testo\Test;
 
-#[CoversClass(FlagsGridFactory::class)]
-final class FlagsGridFactoryTest extends TestCase
+#[Test]
+#[Covers(FlagsGridFactory::class)]
+final class FlagsGridFactoryTest
 {
     private FlagsGridFactory $factory;
 
-    #[\Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function setUp(): void
     {
         $this->factory = new FlagsGridFactory(new TestContainer());
     }
 
-    #[Test]
     public function rendersTableWithBootstrapClassesAndColumns(): void
     {
         $html = $this->factory->render([$this->presenter(name: 'feature.x', writable: true)], true);
 
-        $this->assertStringContainsString('<table', $html);
-        $this->assertStringContainsString('table-striped', $html);
-        $this->assertStringContainsString('table-hover', $html);
-        $this->assertStringContainsString('Name', $html);
-        $this->assertStringContainsString('Rollout', $html);
-        $this->assertStringContainsString('Environments', $html);
-        $this->assertStringContainsString('<strong>feature.x</strong>', $html);
-        $this->assertStringContainsString('100%', $html);
+        Assert::string($html)->contains('<table');
+        Assert::string($html)->contains('table-striped');
+        Assert::string($html)->contains('table-hover');
+        Assert::string($html)->contains('Name');
+        Assert::string($html)->contains('Rollout');
+        Assert::string($html)->contains('Environments');
+        Assert::string($html)->contains('<strong>feature.x</strong>');
+        Assert::string($html)->contains('100%');
     }
 
-    #[Test]
     public function rendersKillSwitchBadgeWhenActive(): void
     {
         $html = $this->factory->render([$this->presenter(name: 'billing', killSwitch: true, writable: true)], true);
 
-        $this->assertStringContainsString('KILLED', $html);
-        $this->assertStringContainsString('text-bg-danger', $html);
-        $this->assertStringContainsString('<strong>billing</strong>', $html);
+        Assert::string($html)->contains('KILLED');
+        Assert::string($html)->contains('text-bg-danger');
+        Assert::string($html)->contains('<strong>billing</strong>');
     }
 
-    #[Test]
     public function rendersOffBadgeWhenDisabled(): void
     {
         $html = $this->factory->render([$this->presenter(name: 'x', enabled: false, writable: true)], true);
 
-        $this->assertStringContainsString('OFF', $html);
-        $this->assertStringContainsString('text-bg-secondary', $html);
+        Assert::string($html)->contains('OFF');
+        Assert::string($html)->contains('text-bg-secondary');
     }
 
-    #[Test]
     public function rendersEnvironmentsAllBadgeForEmptyList(): void
     {
         $html = $this->factory->render([$this->presenter(name: 'x', writable: true)], true);
 
-        $this->assertStringContainsString('<span class="badge text-bg-info">all</span>', $html);
+        Assert::string($html)->contains('<span class="badge text-bg-info">all</span>');
     }
 
-    #[Test]
     public function rendersEnvironmentsAsList(): void
     {
         $html = $this->factory->render([$this->presenter(name: 'x', environments: ['prod', 'staging'], writable: true)], true);
 
-        $this->assertStringContainsString('<span class="badge text-bg-info">prod, staging</span>', $html);
+        Assert::string($html)->contains('<span class="badge text-bg-info">prod, staging</span>');
     }
 
-    #[Test]
     public function rendersWriteControlsWhenWritable(): void
     {
         $html = $this->factory->render([$this->presenter(name: 'x', writable: true)], true);
 
-        $this->assertStringContainsString('btn-outline-primary', $html);
-        $this->assertStringContainsString('href="/edit"', $html);
-        $this->assertStringNotContainsString('&lt;a', $html);
-        $this->assertStringNotContainsString('btn-outline-danger', $html);
+        Assert::string($html)->contains('btn-outline-primary');
+        Assert::string($html)->contains('href="/edit"');
+        Assert::string($html)->notContains('&lt;a');
+        Assert::string($html)->notContains('btn-outline-danger');
     }
 
-    #[Test]
     public function rendersRolloutPercentageExactly(): void
     {
         $html = $this->factory->render([$this->presenter(name: 'x', rollout: 75, writable: true)], true);
 
-        $this->assertStringContainsString('75%', $html);
+        Assert::string($html)->contains('75%');
     }
 
-    #[Test]
     public function omitsWriteControlsWhenReadOnly(): void
     {
         $html = $this->factory->render([$this->presenter(name: 'x', writable: false)], false);
 
-        $this->assertStringNotContainsString('btn-outline-primary', $html);
-        $this->assertStringNotContainsString('btn-outline-danger', $html);
+        Assert::string($html)->notContains('btn-outline-primary');
+        Assert::string($html)->notContains('btn-outline-danger');
     }
 
-    #[Test]
     public function escapesUntrustedEnvironmentValues(): void
     {
         $html = $this->factory->render([$this->presenter(name: 'x', environments: ['<script>alert(1)</script>'], writable: true)], true);
 
-        $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
-        $this->assertStringContainsString('&lt;script&gt;', $html);
+        Assert::string($html)->notContains('<script>alert(1)</script>');
+        Assert::string($html)->contains('&lt;script&gt;');
     }
 
-    /**
-     * @param list<string> $environments
-     */
     private function presenter(
         string $name,
         bool $enabled = true,
