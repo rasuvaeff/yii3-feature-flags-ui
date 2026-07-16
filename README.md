@@ -7,6 +7,7 @@
 [![Psalm level](https://img.shields.io/badge/psalm-level_1-blue.svg)](https://github.com/rasuvaeff/yii3-feature-flags-ui/actions/workflows/static-analysis.yml)
 [![PHP](https://img.shields.io/packagist/dependency-v/rasuvaeff/yii3-feature-flags-ui/php)](https://packagist.org/packages/rasuvaeff/yii3-feature-flags-ui)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE.md)
+[Русская версия](README.ru.md)
 
 Admin UI panel for managing Yii3 feature flags.
 
