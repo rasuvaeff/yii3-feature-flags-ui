@@ -1,4 +1,5 @@
 # rasuvaeff/yii3-feature-flags-ui
+
 [![Latest Stable Version](https://poser.pugx.org/rasuvaeff/yii3-feature-flags-ui/v)](https://packagist.org/packages/rasuvaeff/yii3-feature-flags-ui)
 [![Total Downloads](https://poser.pugx.org/rasuvaeff/yii3-feature-flags-ui/downloads)](https://packagist.org/packages/rasuvaeff/yii3-feature-flags-ui)
 [![Build](https://github.com/rasuvaeff/yii3-feature-flags-ui/actions/workflows/build.yml/badge.svg)](https://github.com/rasuvaeff/yii3-feature-flags-ui/actions/workflows/build.yml)
@@ -6,32 +7,42 @@
 [![Psalm level](https://img.shields.io/badge/psalm-level_1-blue.svg)](https://github.com/rasuvaeff/yii3-feature-flags-ui/actions/workflows/static-analysis.yml)
 [![PHP](https://img.shields.io/packagist/dependency-v/rasuvaeff/yii3-feature-flags-ui/php)](https://packagist.org/packages/rasuvaeff/yii3-feature-flags-ui)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE.md)
-Панель пользовательского интерфейса администратора для управления флагами функций Yii3.
+[English version](README.md)
 
- > Используете помощника по программированию с искусственным интеллектом? [llms.txt](llms.txt) содержит компактную ссылку на API, которой вы можете поделиться с моделью. @@ЛИНИЯ@@
-A drop-in admin panel for [`rasuvaeff/yii3-feature-flags`](https://github.com/rasuvaeff/yii3-feature-flags):
-перечислите флаги в сортируемой сетке (с переключателем уничтожения и отключенными значками), создайте
- и отредактируйте их (имя, включено, развертывание, соль, переключатель уничтожения, среды), удалите
- их и создайте события `FlagChanged` для контрольного журнала / аннулирования кэша. Поставщики
-, доступные только для чтения, автоматически отключают элементы управления. @@ЛИНИЯ@@
+Admin UI-панель для управления feature-флагами Yii3.
+
+> Используете AI-ассистента для написания кода? В [llms.txt](llms.txt) — компактный
+> API-справочник, которым можно поделиться с моделью.
+
+Drop-in admin-панель для [`rasuvaeff/yii3-feature-flags`](https://github.com/rasuvaeff/yii3-feature-flags):
+список флагов в сортируемой сетке (с kill switch и disabled-бейджами), создание и
+редактирование (name, enabled, rollout, salt, kill switch, environments), удаление,
+а также эмитирование `FlagChanged`-событий для audit trail / инвалидации кэша.
+Read-only-провайдеры автоматически получают отключённые контролы.
+
 ## Требования
-- PHP 8.3+
- - `rasuvaeff/yii3-feature-flags` ^1.0 - `Flag`, `FlagProvider`, `WritableFlagProvider`
- - Доступный для записи бэкенд провайдера (обычно `rasuvaeff/yii3-feature-flags-db` ^1.0), привязанный к `FlagProvider` и `WritableFlagProvider`
- - `yiisoft/yii-view-renderer`, `yiisoft/router`, `yiisoft/user`
- - `yiisoft/html`, `yiisoft/validator`, `yiisoft/form-model`, `yiisoft/data`, `yiisoft/yii-dataview`
- - Конкретная реализация маршрутизатора (например, `yiisoft/router-fastroute`) - предоставляется вашим приложением
- — CSS Bootstrap 5, загружаемый хост-приложением (представления используют классы Bootstrap, без встроенных стилей)
 
- Сетка списка отображается на стороне сервера из контейнера внедрения внедрения приложения
- («FlagsGridFactory»), поэтому хосту **нет** необходимости загружать WidgetFactory`. @@ЛИНИЯ@@
+- PHP 8.3+
+- `rasuvaeff/yii3-feature-flags` ^1.0 - `Flag`, `FlagProvider`, `WritableFlagProvider`
+- Writable-бэкенд провайдера (обычно `rasuvaeff/yii3-feature-flags-db` ^1.0), привязанный к `FlagProvider` и `WritableFlagProvider`
+- `yiisoft/yii-view-renderer`, `yiisoft/router`, `yiisoft/user`
+- `yiisoft/html`, `yiisoft/validator`, `yiisoft/form-model`, `yiisoft/data`, `yiisoft/yii-dataview`
+- Конкретная реализация router'а (например `yiisoft/router-fastroute`) — предоставляется приложением
+- Bootstrap 5 CSS, загружаемый хост-приложением (views используют классы Bootstrap, без inline-стилей)
+
+Сетка списка рендерится серверсайдно из DI-контейнера приложения
+(`FlagsGridFactory`), поэтому хосту **не** нужно загружать `WidgetFactory`.
+
 ## Установка
+
 ```bash
 composer require rasuvaeff/yii3-feature-flags-ui
 ```
+
 ## Использование
-В пакет входит подключение конфигурационного плагина Yii3 (`di`, `params`). Добавьте свои параметры
- в цепочку слияния:
+
+Пакет поставляет Yii3 config-plugin wiring (`di`, `params`). Добавьте свои params
+в merge-chain:
 
 ```php
 use Rasuvaeff\Yii3FeatureFlagsUi\FlagRoutes;
@@ -52,11 +63,14 @@ return [
     ],
 ];
 ```
-`layout` управляет общей оболочкой. «views.list» и «views.edit» переопределяют только соответствующие шаблоны; они не заменяют макет.
 
- Привяжите флаговые контракты к своему провайдеру. С `rasuvaeff/yii3-feature-flags-db` ^1.0
- это происходит автоматически — его конфигурационный плагин связывает `WritableFlagProvider` и `FlagProvider`
- с одним и тем же `DbFlagProvider`. Для пользовательского бэкэнда свяжите их самостоятельно:
+`layout` управляет общей обёрткой. `views.list` и `views.edit` переопределяют
+только соответствующие шаблоны; они не заменяют layout.
+
+Привяжите контракты флагов к вашему провайдеру. С
+`rasuvaeff/yii3-feature-flags-db` ^1.0 это происходит автоматически — его
+config-plugin биндит `WritableFlagProvider` и `FlagProvider` на один и тот же
+`DbFlagProvider`. Для кастомного бэкенда забиндите их сами:
 
 ```php
 use Rasuvaeff\Yii3FeatureFlags\{FlagProvider, WritableFlagProvider};
@@ -67,28 +81,42 @@ return [
     WritableFlagProvider::class => Reference::to(FlagProvider::class),
 ];
 ```
+
 ## Маршруты
-| Метод | Путь | Действие | Имя по умолчанию |
- |---|---|---|---|
- | ПОЛУЧИТЬ | `{префикс}` | `Yii\Список\Действие` | `флаги/список` |
- | ПОЛУЧИТЬ | `{префикс}/новый` | `Yii\Edit\Action::new()` | `флаги/создать` |
- | ПОЛУЧИТЬ | `{префикс}/{имя}/редактировать` | `Yii\Редактировать\Действие` | `флаги/редактировать` |
- | ПОСТ | `{префикс}/новый` | `Yii\Update\Action::new()` | `флаги/магазин` |
- | ПОСТ | `{префикс}/{имя}` | `Yii\Обновление\Действие` | `флаги/обновление` |
- | ПОСТ | `{префикс}/{имя}/удалить` | `Yii\Удалить\Действие` | `флаги/удалить` |
 
- `middlewares.{all,list,edit,create,store,update,delete}` — добавьте промежуточное программное обеспечение для каждого слота, не разветвляя маршруты. `RequestBodyParser` автоматически добавляется в маршруты POST (сохранение, обновление, удаление); установите `'body_parser' => false` в параметрах, чтобы отказаться.
+| Метод | Путь | Action | Имя по умолчанию |
+|---|---|---|---|
+| GET | `{prefix}` | `Yii\List\Action` | `flags/list` |
+| GET | `{prefix}/new` | `Yii\Edit\Action::new()` | `flags/create` |
+| GET | `{prefix}/{name}/edit` | `Yii\Edit\Action` | `flags/edit` |
+| POST | `{prefix}/new` | `Yii\Update\Action::new()` | `flags/store` |
+| POST | `{prefix}/{name}` | `Yii\Update\Action` | `flags/update` |
+| POST | `{prefix}/{name}/delete` | `Yii\Delete\Action` | `flags/delete` |
 
- URL-адреса и перенаправления генерируются через маршрутизатор («UrlGeneratorInterface») по имени маршрута; ссылки остаются корректными под любым префиксом или поддоменом. Переопределите `route_names` в параметрах, если ваше приложение использует другое соглашение об именах. @@ЛИНИЯ@@
-### Плоская проводка
-Подключите связанный `config/routes.php` явно в `configuration.php`:
+`middlewares.{all,list,edit,create,store,update,delete}` — добавляйте
+middleware'ы на каждый слот без форкования маршрутов. `RequestBodyParser`
+добавляется автоматически к POST-маршрутам (store, update, delete); установите
+`'body_parser' => false` в params, чтобы отказаться.
+
+URL'ы и редиректы генерируются через router (`UrlGeneratorInterface`) по имени
+маршрута; ссылки остаются корректными под любым префиксом или поддоменом.
+Переопределите `route_names` в params, если ваше приложение использует другую
+схему имён.
+
+### Flat-route wiring
+
+Подключите bundled `config/routes.php` явно в `configuration.php`:
 
 ```php
 'routes' => 'vendor/rasuvaeff/yii3-feature-flags-ui/config/routes.php',
 ```
-Префикс маршрута, имена и промежуточное ПО считываются из параметров (`FlagRoutes::PARAM_KEY`). @@ЛИНИЯ@@
-### Групповая админ-панель
-Внутри группы (типичный подход для административной области с общим префиксом):
+
+Префикс маршрута, имена и middleware'ы читаются из params
+(`FlagRoutes::PARAM_KEY`).
+
+### Групповая admin-панель
+
+Внутри `Group` (типичный подход для админ-области с общим префиксом):
 
 ```php
 use Rasuvaeff\Yii3FeatureFlagsUi\FlagRoutes;
@@ -98,11 +126,13 @@ Group::create(prefix: '/admin')->routes(
     ...FlagRoutes::fromParams($params),
 );
 ```
-`fromParams()` считывает префикс, имена, промежуточное программное обеспечение и отказ от парсера тела из
- `$params[FlagRoutes::PARAM_KEY]`, поэтому регистрация маршрута и генерация URL-адреса `FlagUrls`
- всегда синхронизируются.
 
- Для полного контроля над именами используйте create() напрямую и добавьте соответствующие `route_names` к параметрам:
+`fromParams()` читает префикс, имена, middleware'ы и opt-out body-parser'а из
+`$params[FlagRoutes::PARAM_KEY]`, поэтому регистрация маршрутов и URL-генерация
+через `FlagUrls` всегда синхронизированы.
+
+Для полного контроля над именами используйте `create()` напрямую и добавьте
+соответствующие `route_names` в params:
 
 ```php
 FlagRoutes::create(
@@ -111,49 +141,69 @@ FlagRoutes::create(
     middlewares: ['all' => [AuthMiddleware::class]],
 )
 ```
+
 ## Авторизация
-Пакет не обеспечивает внутренний контроль доступа. Защитите маршруты с помощью
- `middlewares.all` (или ключей для каждого маршрута). Пакет обеспечивает внедрение CurrentUser
- только для событий аудита. @@ЛИНИЯ@@
+
+Пакет не осуществляет внутренний контроль доступа. Защищайте маршруты через
+`middlewares.all` (или per-route ключи). Пакет предоставляет инжекцию
+`CurrentUser` только для audit-событий.
+
 ## Публичный API
+
 | Класс | Описание |
- |---|---|
- | `FlagRoutes` | Строит 6 маршрутов; `fromParams($params)` для групповых панелей,`create()` для полного управления |
- | `Yii\Список\Действие` | GET сетка всех флагов со значками KILLED/OFF |
- | `Yii\Редактировать\Действие` | GET форма редактирования существующего флага; `::new()` для создания формы |
- | `Yii\Обновление\Действие` | POST-проверка + сохранение; `::new()` для создания; повторный рендеринг на недействительный |
- | `Yii\Удалить\Действие` | POST удалить флаг -> перенаправить в список |
- | `Форма\ФлагФорм` | Отправленные данные для редактирования (имя, включено, развертывание, соль, killSwitch, среда) |
- | `Проверка\FlagFormNormalizer` | Приводит проверенную форму к флагу |
- | `Рендерер\TemplateRendererInterface` | Рендеринг шва (тестируемые действия) |
- | `Рендерер\ViewTemplateRenderer` | Средство рендеринга по умолчанию через `WebViewRenderer` |
- | `Событие\FlagChanged` | Событие PSR-14 после сохранения/удаления (имя, операция, актер) | @@ЛИНИЯ@@
-## Поставщики только для чтения
-Если ваш FlagProvider не реализует WritableFlagProvider:
+|---|---|
+| `FlagRoutes` | Строит 6 маршрутов; `fromParams($params)` для групповых панелей, `create()` для полного контроля |
+| `Yii\List\Action` | GET-сетка всех флагов с KILLED/OFF-бейджами |
+| `Yii\Edit\Action` | GET-форма редактирования существующего флага; `::new()` для формы создания |
+| `Yii\Update\Action` | POST validate + save; `::new()` для создания; re-render при невалидном |
+| `Yii\Delete\Action` | POST удаление флага → редирект на список |
+| `Form\FlagForm` | Отправляемые данные формы (name, enabled, rollout, salt, killSwitch, environments) |
+| `Validation\FlagFormNormalizer` | Приводит отвалидированную форму к `Flag` |
+| `Renderer\TemplateRendererInterface` | Rendering-seam (тестируемые actions) |
+| `Renderer\ViewTemplateRenderer` | Дефолтный renderer над `WebViewRenderer` |
+| `Event\FlagChanged` | PSR-14 событие после save/delete (name, operation, actor) |
 
- - `config/routes.php` по-прежнему регистрирует все маршруты; Проверки `instanceof` во время выполнения возвращают 403 при POST.
- — в представлении списка отображается значок «Поставщик только для чтения», а кнопка «Создать» скрыта.
- — в режиме редактирования отключаются все поля и отображается предупреждение.
+## Read-only провайдеры
 
- Это позволяет просматривать ConfigFlagProvider (флаги только для конфигурации) в пользовательском интерфейсе без поддержки записи. @@ЛИНИЯ@@
+Если ваш `FlagProvider` не реализует `WritableFlagProvider`:
+
+- `config/routes.php` всё равно регистрирует все маршруты; runtime-проверки
+  `instanceof` возвращают 403 на POST.
+- List-view показывает бейдж «Read-only provider», а кнопка создания скрыта.
+- Edit-view отключает все поля и показывает предупреждение.
+
+Это позволяет `ConfigFlagProvider` (флаги только из конфига) просматривать в UI
+без поддержки записи.
+
 ## Безопасность
-| Концерн | Поведение |
- |---|---|
- | Поставщики только для чтения | `Обновление`/`Удалить` отклонено с помощью HTTP 403 |
- | Неизвестное название флага | `Edit` возвращает 404, `Update`/`Delete` возвращает 404 |
- | Неверный ввод | Повторно отображает страницу редактирования с помощью HTTP 200, без записи |
- | Вставка имени флага | При существующем редактировании отправленное `имя` игнорируется; название маршрута закреплено |
- | Предупреждение об аварийном выключателе | Форма редактирования всегда отображает предупреждение; пользователи не могут отключить предупреждение |
- | CSRF | Применяется промежуточным программным обеспечением вашего приложения; форма выдает скрытое поле `_csrf`, когда присутствует атрибут запроса `csrf_token` |
- | Выход | Все значения проходят через `Yiisoft\Html\Html::encode()` / виджеты Html / кодировку GridView | @@ЛИНИЯ@@
-## Настройка представлений
-Переопределите в параметрах `views.list` и/или `views.edit` абсолютные пути к вашим собственным шаблонам. Шаблоны получают те же переменные, что и встроенные — см. «resources/views/».
 
- В форме редактирования используются имена входных данных, относящиеся к `Flag[...]` (например, `Flag[name]`, `Flag[enabled]`). Пользовательские шаблоны редактирования должны сохранять эту область действия, чтобы FlagForm::fromParsedBody() работал.
+| Аспект | Поведение |
+|---|---|
+| Read-only провайдеры | `Update`/`Delete` отклоняются с HTTP 403 |
+| Неизвестное имя флага | `Edit` возвращает 404, `Update`/`Delete` возвращают 404 |
+| Невалидный ввод | Ре-рендер страницы редактирования с HTTP 200, без записи |
+| Подмена имени флага | При редактировании существующего отправляемое `name` игнорируется; имя из маршрута зафиксировано |
+| Предупреждение kill switch | Форма редактирования всегда рендерит предупреждение; пользователи не могут отключить его |
+| CSRF | Обеспечивается middleware'ом приложения; форма эмитит hidden-поле `_csrf`, когда присутствует request-атрибут `csrf_token` |
+| Вывод | Все значения проходят через `Yiisoft\Html\Html::encode()` / Html-виджеты / GridView-encoding |
 
- **Flash-сообщения** не встроены — пакет не знает о сеансе хост-приложения. Подпишитесь на «FlagChanged» в своем приложении, чтобы добавлять флэш-уведомления, аннулирование кеша или записи контрольного журнала. @@ЛИНИЯ@@
-## Почему существует «FlagChanged»
-Пакет выдает `FlagChanged` после сохранения/удаления, чтобы ведущее приложение могло реагировать без
- связывания себя с действиями пользовательского интерфейса. Типичное использование — аннулирование кэша, ведение журнала аудита
-, счетчики метрик и зависимая реконфигурация. Поле `actor`
- содержит текущий идентификатор пользователя; `null` для гостей.
+## Кастомизация views
+
+Переопределите `views.list` и/или `views.edit` в params абсолютными путями к
+своим шаблонам. Шаблоны получают те же переменные, что и bundled — см.
+`resources/views/`.
+
+Форма редактирования использует имена инпутов в скоупе `Flag[...]` (например
+`Flag[name]`, `Flag[enabled]`). Кастомные edit-шаблоны должны сохранять этот
+скоуп, чтобы работал `FlagForm::fromParsedBody()`.
+
+**Flash-сообщения** не встроены — пакет не знает о сессии хост-приложения.
+Подпишитесь на `FlagChanged` в своём приложении для flash-уведомлений,
+инвалидации кэша или audit-записей.
+
+## Зачем существует `FlagChanged`
+
+Пакет эмитит `FlagChanged` после save/delete, чтобы хост-приложение могло
+реагировать без жёсткой связи с UI-actions. Типичные применения — инвалидация
+кэша, audit-логирование, метрические счётчики и зависимая реконфигурация. Поле
+`actor` несёт ID текущего пользователя; `null` для гостей.
