@@ -29,6 +29,15 @@ final readonly class FlagFormRules
         return [
             'name' => [
                 new Required(message: 'Flag name is required'),
+                // PCRE `$` matches before a trailing `\n`; reject LF/CR
+                // explicitly so smuggled `<name>\n` cannot pass NAME_PATTERN.
+                new Callback(static function (mixed $value): Result {
+                    if (\is_string($value) && (\str_contains($value, "\n") || \str_contains($value, "\r"))) {
+                        return self::error('Flag name must not contain newlines');
+                    }
+
+                    return new Result();
+                }),
                 new Regex(
                     pattern: self::NAME_PATTERN,
                     message: 'Flag name must start with a lowercase letter and contain only lowercase letters, digits, dots, hyphens and underscores',
