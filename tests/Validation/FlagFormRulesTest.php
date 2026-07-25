@@ -67,6 +67,7 @@ final class FlagFormRulesTest
         yield 'leading digit' => ['1flag'];
         yield 'space' => ['invalid name'];
         yield 'empty' => [''];
+        yield 'trailing newline' => ["checkout\n"];
     }
 
     public function acceptsIntRollout(): void

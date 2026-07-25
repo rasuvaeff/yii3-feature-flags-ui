@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.3 — 2026-07-25
+
+- Reject flag names containing `\n` or `\r` in `FlagFormRules`. PCRE `$` matches
+  before a single trailing `\n`, so a smuggled `"<name>\n"` could otherwise pass
+  the existing `NAME_PATTERN` regex. A new explicit newline check runs before
+  the regex so any LF/CR fails form validation; `NAME_PATTERN` itself is
+  unchanged to preserve the public contract.
+
 ## 1.0.2 — 2026-06-30
 
 - Add `/benchmarks` and `/Makefile` to `.gitattributes` export-ignore.
