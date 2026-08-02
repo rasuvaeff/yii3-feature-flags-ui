@@ -21,6 +21,7 @@ use Yiisoft\Validator\Validator;
 
 #[Test]
 #[Covers(UpdateFlagProcessor::class)]
+#[Covers(Status::class)]
 final class UpdateFlagProcessorTest extends ActionTestCase
 {
     private RecordingWritableProvider $provider;
@@ -46,6 +47,7 @@ final class UpdateFlagProcessorTest extends ActionTestCase
         );
 
         Assert::same($response->getStatusCode(), Status::NOT_FOUND);
+        Assert::same(Status::NOT_FOUND, 404);
     }
 
     public function read_only_providerReturns403(): void
@@ -73,6 +75,7 @@ final class UpdateFlagProcessorTest extends ActionTestCase
         $response = $processor->processExisting('checkout.v2', $this->request('POST', parsedBody: ['Flag' => ['name' => 'checkout.v2', 'rollout' => '100']]));
 
         Assert::same($response->getStatusCode(), Status::FORBIDDEN);
+        Assert::same(Status::FORBIDDEN, 403);
     }
 
     public function validFormSavesAndRedirects(): void
@@ -89,6 +92,7 @@ final class UpdateFlagProcessorTest extends ActionTestCase
         );
 
         Assert::same($response->getStatusCode(), Status::FOUND);
+        Assert::same(Status::FOUND, 302);
         Assert::same($response->getHeaderLine('Location'), '/admin/flags');
         Assert::same($this->provider->saveCalls, ['checkout.v2']);
     }
@@ -119,6 +123,7 @@ final class UpdateFlagProcessorTest extends ActionTestCase
         );
 
         Assert::same($response->getStatusCode(), Status::OK);
+        Assert::same(Status::OK, 200);
         Assert::same($this->renderer->view, 'edit');
         Assert::notNull($this->renderer->parameters['error']);
         Assert::string($this->renderer->parameters['error'])->contains('Rollout');
