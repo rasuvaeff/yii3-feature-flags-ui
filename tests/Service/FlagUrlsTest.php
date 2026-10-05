@@ -6,7 +6,7 @@ namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Service;
 
 use Rasuvaeff\Yii3FeatureFlagsUi\FlagRoutes;
 use Rasuvaeff\Yii3FeatureFlagsUi\Service\FlagUrls;
-use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\FakeUrlGenerator;
+use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Support\Urls;
 use Stringable;
 use Testo\Assert;
 use Testo\Codecov\Covers;
@@ -19,7 +19,7 @@ final class FlagUrlsTest
 {
     public function generatesUrlsForDefaultRouteNames(): void
     {
-        $urls = new FlagUrls(urlGenerator: new FakeUrlGenerator());
+        $urls = new FlagUrls(urlGenerator: Urls::generator());
 
         Assert::same($urls->list(), '/admin/flags');
         Assert::same($urls->create(), '/admin/flags/new');

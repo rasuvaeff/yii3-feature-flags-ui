@@ -111,7 +111,7 @@ final class FlagsGridFactoryTest
         array $environments = [],
         bool $writable = true,
     ): FlagPresenter {
-        $flag = new Flag(name: $name, enabled: $enabled, killSwitch: $killSwitch, rollout: $rollout, environments: $environments);
+        $flag = new Flag(name: $name, enabled: $enabled, rollout: $rollout, killSwitch: $killSwitch, environments: $environments);
 
         return new FlagPresenter(
             flag: $flag,

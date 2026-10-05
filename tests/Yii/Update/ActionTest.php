@@ -6,7 +6,6 @@ namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Yii\Update;
 
 use Rasuvaeff\Yii3FeatureFlagsUi\Http\Status;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Action\ActionTestCase;
-use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\FakeTemplateRenderer;
 use Rasuvaeff\Yii3FeatureFlagsUi\Yii\Update\Action as YiiUpdateAction;
 use Testo\Assert;
 use Testo\Codecov\Covers;
@@ -18,7 +17,7 @@ final class ActionTest extends ActionTestCase
 {
     public function invokeDelegatesToProcessExisting(): void
     {
-        $renderer = new FakeTemplateRenderer($this->http);
+        $renderer = $this->renderer();
         $action = new YiiUpdateAction(
             processor: $this->updateProcessor(provider: $this->writableProvider(), renderer: $renderer),
         );
@@ -33,7 +32,7 @@ final class ActionTest extends ActionTestCase
 
     public function newActionDelegatesToProcessNew(): void
     {
-        $renderer = new FakeTemplateRenderer($this->http);
+        $renderer = $this->renderer();
         $action = new YiiUpdateAction(
             processor: $this->updateProcessor(provider: $this->writableProvider(), renderer: $renderer),
         );
