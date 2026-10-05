@@ -8,7 +8,6 @@ use Rasuvaeff\Yii3FeatureFlagsUi\Form\FlagForm;
 use Rasuvaeff\Yii3FeatureFlagsUi\Http\Status;
 use Rasuvaeff\Yii3FeatureFlagsUi\Renderer\EditPageRenderer;
 use Rasuvaeff\Yii3FeatureFlagsUi\Service\EditFlagResponder;
-use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\FakeTemplateRenderer;
 use Testo\Assert;
 use Testo\Codecov\Covers;
 use Testo\Test;
@@ -20,7 +19,7 @@ final class EditFlagResponderTest extends ActionTestCase
 {
     public function returns404ForUnknownName(): void
     {
-        $renderer = new FakeTemplateRenderer($this->http);
+        $renderer = $this->renderer();
 
         $response = $this->editResponder($renderer, $this->writableProvider())->respondExisting('does.not.exist');
 
@@ -29,55 +28,55 @@ final class EditFlagResponderTest extends ActionTestCase
 
     public function rendersExistingFlag(): void
     {
-        $renderer = new FakeTemplateRenderer($this->http);
+        $renderer = $this->renderer();
 
         $response = $this->editResponder($renderer, $this->writableProvider())->respondExisting('checkout.v2');
 
         Assert::same($response->getStatusCode(), Status::OK);
-        Assert::same($renderer->view, 'edit');
-        Assert::false($renderer->parameters['isNew']);
+        Assert::same($this->renderedView(), 'edit');
+        Assert::false($this->renderedParameters()['isNew']);
         /** @var FlagForm $form */
-        $form = $renderer->parameters['form'];
+        $form = $this->renderedParameters()['form'];
         Assert::false($form->present);
         Assert::same($form->name, 'checkout.v2');
-        Assert::true($renderer->parameters['isWritable']);
-        Assert::same($renderer->parameters['updateUrl'], '/admin/flags/checkout.v2');
-        Assert::same($renderer->parameters['deleteUrl'], '/admin/flags/checkout.v2/delete');
-        Assert::same($renderer->parameters['listUrl'], '/admin/flags');
+        Assert::true($this->renderedParameters()['isWritable']);
+        Assert::same($this->renderedParameters()['updateUrl'], '/admin/flags/checkout.v2');
+        Assert::same($this->renderedParameters()['deleteUrl'], '/admin/flags/checkout.v2/delete');
+        Assert::same($this->renderedParameters()['listUrl'], '/admin/flags');
     }
 
     public function rendersExistingFlagEnvironmentsAsJson(): void
     {
-        $renderer = new FakeTemplateRenderer($this->http);
+        $renderer = $this->renderer();
 
         $this->editResponder($renderer, $this->writableProvider())->respondExisting('search.beta');
 
         /** @var FlagForm $form */
-        $form = $renderer->parameters['form'];
+        $form = $this->renderedParameters()['form'];
         Assert::same($form->environments, '["prod","staging"]');
     }
 
     public function rendersCreateFormForNew(): void
     {
-        $renderer = new FakeTemplateRenderer($this->http);
+        $renderer = $this->renderer();
 
         $response = $this->editResponder($renderer, $this->writableProvider())->respondNew();
 
         Assert::same($response->getStatusCode(), Status::OK);
-        Assert::true($renderer->parameters['isNew']);
+        Assert::true($this->renderedParameters()['isNew']);
         /** @var FlagForm $form */
-        $form = $renderer->parameters['form'];
+        $form = $this->renderedParameters()['form'];
         Assert::same($form->name, '');
-        Assert::null($renderer->parameters['flag']);
-        Assert::null($renderer->parameters['deleteUrl']);
-        Assert::same($renderer->parameters['updateUrl'], '/admin/flags/new');
-        Assert::same($renderer->parameters['listUrl'], '/admin/flags');
-        Assert::true($renderer->parameters['isWritable']);
+        Assert::null($this->renderedParameters()['flag']);
+        Assert::null($this->renderedParameters()['deleteUrl']);
+        Assert::same($this->renderedParameters()['updateUrl'], '/admin/flags/new');
+        Assert::same($this->renderedParameters()['listUrl'], '/admin/flags');
+        Assert::true($this->renderedParameters()['isWritable']);
     }
 
     public function newFormFlagsProviderAsReadOnlyWhenProviderNotWritable(): void
     {
-        $renderer = new FakeTemplateRenderer($this->http);
+        $renderer = $this->renderer();
 
         $readOnlyProvider = new readonly class ($this->flags()) implements \Rasuvaeff\Yii3FeatureFlags\FlagProvider {
             /** @param array<string, \Rasuvaeff\Yii3FeatureFlags\Flag> $flags */
@@ -92,12 +91,12 @@ final class EditFlagResponderTest extends ActionTestCase
 
         $this->editResponder($renderer, $readOnlyProvider)->respondNew();
 
-        Assert::false($renderer->parameters['isWritable']);
+        Assert::false($this->renderedParameters()['isWritable']);
     }
 
     public function readOnlyProviderDisablesFormFields(): void
     {
-        $renderer = new FakeTemplateRenderer($this->http);
+        $renderer = $this->renderer();
 
         $readOnlyProvider = new readonly class ($this->flags()) implements \Rasuvaeff\Yii3FeatureFlags\FlagProvider {
             /** @param array<string, \Rasuvaeff\Yii3FeatureFlags\Flag> $flags */
@@ -112,6 +111,6 @@ final class EditFlagResponderTest extends ActionTestCase
 
         $this->editResponder($renderer, $readOnlyProvider)->respondExisting('checkout.v2');
 
-        Assert::false($renderer->parameters['isWritable']);
+        Assert::false($this->renderedParameters()['isWritable']);
     }
 }

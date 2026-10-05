@@ -59,8 +59,8 @@ final class FlagRoutesTest
     {
         $routes = FlagRoutes::create();
 
-        Assert::same(self::lastMiddleware($routes[1]), [EditAction::class, 'new']);
-        Assert::same(self::lastMiddleware($routes[3]), [UpdateAction::class, 'new']);
+        Assert::same($this->lastMiddleware($routes[1]), [EditAction::class, 'new']);
+        Assert::same($this->lastMiddleware($routes[3]), [UpdateAction::class, 'new']);
     }
 
     public function getRoutesHaveNoExtraMiddlewaresByDefault(): void
@@ -212,7 +212,7 @@ final class FlagRoutesTest
         Assert::same($routes[0]->getData('name'), FlagRoutes::LIST);
     }
 
-    private static function lastMiddleware(Route $route): mixed
+    private function lastMiddleware(Route $route): mixed
     {
         $middlewares = $route->getData('enabledMiddlewares');
         $last = array_key_last($middlewares);

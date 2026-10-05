@@ -6,7 +6,6 @@ namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Yii\List;
 
 use Rasuvaeff\Yii3FeatureFlagsUi\Http\Status;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Action\ActionTestCase;
-use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\FakeTemplateRenderer;
 use Rasuvaeff\Yii3FeatureFlagsUi\Yii\List\Action as YiiListAction;
 use Testo\Assert;
 use Testo\Codecov\Covers;
@@ -18,7 +17,7 @@ final class ActionTest extends ActionTestCase
 {
     public function invokesResponderWithoutRequestArgument(): void
     {
-        $renderer = new FakeTemplateRenderer($this->http);
+        $renderer = $this->renderer();
         $action = new YiiListAction(
             responder: $this->listResponder($renderer, $this->writableProvider()),
         );
@@ -26,6 +25,6 @@ final class ActionTest extends ActionTestCase
         $response = $action->__invoke();
 
         Assert::same($response->getStatusCode(), Status::OK);
-        Assert::same($renderer->view, 'list');
+        Assert::same($this->renderedView(), 'list');
     }
 }

@@ -4,31 +4,36 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Action;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Rasuvaeff\Understudy\Arg;
+use Rasuvaeff\Understudy\Invocation;
+use Rasuvaeff\Understudy\Understudy;
+use Rasuvaeff\Yii3FeatureFlags\WritableFlagProvider;
 use Rasuvaeff\Yii3FeatureFlagsUi\Event\FlagChanged;
 use Rasuvaeff\Yii3FeatureFlagsUi\Http\Status;
 use Rasuvaeff\Yii3FeatureFlagsUi\Service\DeleteFlagProcessor;
-use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\RecordingEventDispatcher;
-use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Double\RecordingWritableProvider;
 use Testo\Assert;
 use Testo\Codecov\Covers;
 use Testo\Lifecycle\BeforeTest;
 use Testo\Test;
 use Yiisoft\User\CurrentUser;
 
+use function Rasuvaeff\Understudy\verify;
+
 #[Test]
 #[Covers(DeleteFlagProcessor::class)]
 final class DeleteFlagProcessorTest extends ActionTestCase
 {
-    private RecordingWritableProvider $provider;
+    private WritableFlagProvider $provider;
 
-    private RecordingEventDispatcher $events;
+    private EventDispatcherInterface $events;
 
     #[BeforeTest]
     public function setUp(): void
     {
         parent::setUp();
-        $this->provider = new RecordingWritableProvider(flags: $this->flags());
-        $this->events = new RecordingEventDispatcher();
+        $this->provider = $this->writableProvider();
+        $this->events = $this->eventDispatcher();
     }
 
     public function returns404ForUnknownName(): void
@@ -68,15 +73,15 @@ final class DeleteFlagProcessorTest extends ActionTestCase
 
         Assert::same($response->getStatusCode(), Status::FOUND);
         Assert::same($response->getHeaderLine('Location'), '/admin/flags');
-        Assert::same($this->provider->removeCalls, ['checkout.v2']);
+        verify(fn() => $this->provider->remove('checkout.v2'), times: 1);
     }
 
     public function dispatchesDeletedEventWithActor(): void
     {
         $this->processor(currentUser: $this->currentUser('user-1'))->process('checkout.v2');
 
-        Assert::count($this->events->events, 1);
-        $event = $this->events->events[0] ?? null;
+        Assert::count($this->dispatchedEvents(), 1);
+        $event = $this->dispatchedEvents()[0] ?? null;
         Assert::instanceOf($event, FlagChanged::class);
         Assert::same($event->name, 'checkout.v2');
         Assert::same($event->operation, FlagChanged::OPERATION_DELETED);
@@ -94,9 +99,9 @@ final class DeleteFlagProcessorTest extends ActionTestCase
 
         $processor->process('checkout.v2');
 
-        Assert::count($this->events->events, 1);
+        Assert::count($this->dispatchedEvents(), 1);
         /** @var FlagChanged $event */
-        $event = $this->events->events[0];
+        $event = $this->dispatchedEvents()[0];
         Assert::null($event->actor);
     }
 
@@ -111,7 +116,7 @@ final class DeleteFlagProcessorTest extends ActionTestCase
         $response = $processor->process('checkout.v2');
 
         Assert::same($response->getStatusCode(), Status::FOUND);
-        Assert::same($this->provider->removeCalls, ['checkout.v2']);
+        verify(fn() => $this->provider->remove('checkout.v2'), times: 1);
     }
 
     private function processor(?CurrentUser $currentUser = null): DeleteFlagProcessor
@@ -120,6 +125,17 @@ final class DeleteFlagProcessorTest extends ActionTestCase
             provider: $this->provider,
             currentUser: $currentUser,
             eventDispatcher: $this->events,
+        );
+    }
+
+    /**
+     * @return list<object>
+     */
+    private function dispatchedEvents(): array
+    {
+        return array_map(
+            static fn(Invocation $call): object => $call->arg('event'),
+            Understudy::calls(fn() => $this->events->dispatch(Arg::any())),
         );
     }
 }
