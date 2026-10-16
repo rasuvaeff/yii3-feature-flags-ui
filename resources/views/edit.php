@@ -16,7 +16,7 @@ use Yiisoft\Yii\View\Renderer\Csrf;
  * @var string|null $deleteUrl
  * @var string $listUrl
  * @var string|null $error
- * @var Csrf $csrf
+ * @var Csrf|null $csrf
  */
 
 $this->setTitle($isNew ? 'New flag' : 'Edit: ' . $form->name);
@@ -44,7 +44,7 @@ $inputAttrs = $disabled ? ['class' => 'form-control', 'disabled' => true] : ['cl
     <?php endif ?>
 
     <form method="post" action="<?= Html::encode($updateUrl) ?>">
-        <?php if ($csrf !== null): ?>
+        <?php if (($csrf ?? null) !== null): ?>
             <?= $csrf->hiddenInput() ?>
         <?php endif ?>
 
