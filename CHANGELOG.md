@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.4 — 2026-10-17
 
 - Fix a 500 on the flag edit/new pages (`GET /admin/flags/{name}/edit`,
   `GET /admin/flags/new`) in applications that do not configure
