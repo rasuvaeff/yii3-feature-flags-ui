@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\View;
 
+use ErrorException;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Rasuvaeff\Yii3FeatureFlags\Flag;
 use Rasuvaeff\Yii3FeatureFlagsUi\Form\FlagForm;
@@ -14,6 +15,7 @@ use Testo\Lifecycle\BeforeTest;
 use Testo\Test;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\View\WebView;
+use Yiisoft\Yii\View\Renderer\Csrf;
 use Yiisoft\Yii\View\Renderer\WebViewRenderer;
 
 #[Test]
@@ -121,6 +123,39 @@ final class ViewRenderingTest
 
         Assert::string($html)->contains('disabled');
         Assert::string($html)->contains('read-only');
+    }
+
+    public function editTemplateRendersWithoutCsrfParameter(): void
+    {
+        $form = new FlagForm(present: false, name: 'x');
+        $params = $this->editParams(form: $form, isNew: false);
+        unset($params['csrf']);
+
+        // A Yii application error handler converts warnings to exceptions; an
+        // unguarded `$csrf` read in the template is the 500 from issue #15.
+        set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
+            throw new ErrorException($message, 0, $severity, $file, $line);
+        });
+
+        try {
+            $html = $this->render('edit', $params);
+        } finally {
+            restore_error_handler();
+        }
+
+        Assert::string($html)->contains('Edit flag');
+        Assert::string($html)->notContains('_csrf');
+    }
+
+    public function editTemplateRendersCsrfHiddenInputWhenCsrfProvided(): void
+    {
+        $form = new FlagForm(present: false, name: 'x');
+        $params = $this->editParams(form: $form, isNew: false);
+        $params['csrf'] = new Csrf('s3cret-token', '_csrf', 'X-CSRF-Token');
+
+        $html = $this->render('edit', $params);
+
+        Assert::string($html)->contains('<input type="hidden" name="_csrf" value="s3cret-token">');
     }
 
     public function configuredListAndEditViewsOverrideDefaults(): void

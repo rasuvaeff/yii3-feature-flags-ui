@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Fix a 500 on the flag edit/new pages (`GET /admin/flags/{name}/edit`,
+  `GET /admin/flags/new`) in applications that do not configure
+  `yiisoft/yii-view-renderer`'s `CsrfViewInjection`: `resources/views/edit.php`
+  read `$csrf` unguarded, so PHP raised "Undefined variable $csrf" when the
+  injection was absent. The view now follows the `yii3-settings-ui` pattern —
+  `@var Csrf|null $csrf` and `($csrf ?? null) !== null` — and renders without
+  the injection (Fixes #15).
+
 ## 1.0.3 — 2026-07-25
 
 - Reject flag names containing `\n` or `\r` in `FlagFormRules`. PCRE `$` matches
