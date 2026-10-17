@@ -28,6 +28,8 @@ use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Support\Urls;
 use Rasuvaeff\Yii3FeatureFlagsUi\Validation\FlagFormNormalizer;
 use Testo\Lifecycle\BeforeTest;
 use Yiisoft\Auth\IdentityRepositoryInterface;
+use Yiisoft\Router\CurrentRoute;
+use Yiisoft\Router\Route;
 use Yiisoft\User\CurrentUser;
 use Yiisoft\Validator\Validator;
 
@@ -218,5 +220,16 @@ abstract class ActionTestCase
         }
 
         return $request;
+    }
+
+    protected function currentRoute(?string $name = 'checkout.v2'): CurrentRoute
+    {
+        $currentRoute = new CurrentRoute();
+
+        if ($name !== null) {
+            $currentRoute->setRouteWithArguments(Route::get('/admin/flags/{name}/edit'), ['name' => $name]);
+        }
+
+        return $currentRoute;
     }
 }

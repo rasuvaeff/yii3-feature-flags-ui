@@ -92,6 +92,11 @@ return [
 
 `middlewares.{all,list,edit,create,store,update,delete}` — add middlewares per slot without forking the routes. `RequestBodyParser` is added automatically to the POST routes (store, update, delete); set `'body_parser' => false` in params to opt out.
 
+The `{name}` route argument is read by the actions from a constructor-injected
+`Yiisoft\Router\CurrentRoute`, so the routes work through a plain middleware
+dispatcher — no `yiisoft/input-http` hydrator-attribute parameters resolver
+(`HydratorAttributeParametersResolver`) is required in your pipeline.
+
 URLs and redirects are generated through the router (`UrlGeneratorInterface`) by route name; links stay correct under any prefix or subdomain. Override `route_names` in params when your app uses a different naming convention.
 
 ### Flat-route wiring

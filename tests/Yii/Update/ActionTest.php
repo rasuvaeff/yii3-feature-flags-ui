@@ -20,14 +20,29 @@ final class ActionTest extends ActionTestCase
         $renderer = $this->renderer();
         $action = new YiiUpdateAction(
             processor: $this->updateProcessor(provider: $this->writableProvider(), renderer: $renderer),
+            currentRoute: $this->currentRoute(),
         );
 
         $response = $action->__invoke(
-            'checkout.v2',
             $this->request('POST', parsedBody: ['Flag' => ['name' => 'checkout.v2', 'enabled' => '1', 'rollout' => '100']]),
         );
 
         Assert::same($response->getStatusCode(), Status::FOUND);
+    }
+
+    public function invokeWithoutRouteArgumentRespondsNotFound(): void
+    {
+        $renderer = $this->renderer();
+        $action = new YiiUpdateAction(
+            processor: $this->updateProcessor(provider: $this->writableProvider(), renderer: $renderer),
+            currentRoute: $this->currentRoute(name: null),
+        );
+
+        $response = $action->__invoke(
+            $this->request('POST', parsedBody: ['Flag' => ['name' => 'checkout.v2', 'enabled' => '1', 'rollout' => '100']]),
+        );
+
+        Assert::same($response->getStatusCode(), Status::NOT_FOUND);
     }
 
     public function newActionDelegatesToProcessNew(): void
@@ -35,6 +50,7 @@ final class ActionTest extends ActionTestCase
         $renderer = $this->renderer();
         $action = new YiiUpdateAction(
             processor: $this->updateProcessor(provider: $this->writableProvider(), renderer: $renderer),
+            currentRoute: $this->currentRoute(),
         );
 
         $response = $action->new(

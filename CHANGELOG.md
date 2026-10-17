@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.0.0 — 2026-10-17
+
+- Actions no longer read their route argument through the `#[RouteArgument]`
+  attribute hydration. The attribute is resolved only when the host app's
+  middleware dispatcher carries a parameters resolver that understands hydrator
+  attributes — `Yiisoft\Input\Http\HydratorAttributeParametersResolver` from
+  `yiisoft/input-http`, the wiring the `yiisoft/app` template ships. Neither
+  this package nor its README required it, so in any app without that binding
+  every route with an argument (edit, update, delete) failed before the action
+  was ever invoked: the dispatcher could not resolve the string parameter and
+  the request ended 400. `Yii\Edit\Action`, `Yii\Update\Action` and
+  `Yii\Delete\Action` now take a constructor-injected `CurrentRoute`
+  (yiisoft/router is already a direct dependency) and read the `name` argument
+  from it, making `yiisoft/input-http` unnecessary entirely. An unmatched route
+  argument degrades to `''`, which hits the existing unknown-name → 404 path.
+  The `->action(SomeAction::class)` route form the package ships needs
+  `yiisoft/middleware-dispatcher` 5.2+ (invokable class-name definitions); the
+  `require-dev` floor now pins it so the suite tests against a dispatcher the
+  routes actually work on.
+  **BC break:** the `__invoke()` signatures of the three actions changed and
+  their constructors now require `CurrentRoute`; `new()` methods are unchanged
+  (Fixes #16).
+
 ## 1.0.4 — 2026-10-17
 
 - Fix a 500 on the flag edit/new pages (`GET /admin/flags/{name}/edit`,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3FeatureFlagsUi\Tests\Yii\Delete;
 
+use Rasuvaeff\Understudy\Arg;
 use Rasuvaeff\Yii3FeatureFlagsUi\Http\Status;
 use Rasuvaeff\Yii3FeatureFlagsUi\Tests\Action\ActionTestCase;
 use Rasuvaeff\Yii3FeatureFlagsUi\Yii\Delete\Action as YiiDeleteAction;
@@ -22,11 +23,26 @@ final class ActionTest extends ActionTestCase
         $provider = $this->writableProvider();
         $action = new YiiDeleteAction(
             processor: $this->deleteProcessor($provider),
+            currentRoute: $this->currentRoute(),
         );
 
-        $response = $action->__invoke('checkout.v2');
+        $response = $action->__invoke();
 
         Assert::same($response->getStatusCode(), Status::FOUND);
         verify(fn() => $provider->remove('checkout.v2'), times: 1);
+    }
+
+    public function invokeWithoutRouteArgumentRespondsNotFound(): void
+    {
+        $provider = $this->writableProvider();
+        $action = new YiiDeleteAction(
+            processor: $this->deleteProcessor($provider),
+            currentRoute: $this->currentRoute(name: null),
+        );
+
+        $response = $action->__invoke();
+
+        Assert::same($response->getStatusCode(), Status::NOT_FOUND);
+        verify(fn() => $provider->remove(Arg::any()), times: 0);
     }
 }

@@ -19,6 +19,7 @@ Also requires `rasuvaeff/yii3-feature-flags` ^1.0 and a concrete provider (usual
 - Input is validated against `FlagFormRules`; invalid input re-renders the edit page with HTTP 200 and does not write.
 - `environments` field is a JSON array of strings; empty array or blank means all environments.
 - CSRF is the application middleware's job; the form emits a hidden `_csrf` field when a `csrf_token` request attribute is present.
+- Actions read the `{name}` route argument from a constructor-injected `Yiisoft\Router\CurrentRoute` — a plain middleware dispatcher is enough; no `yiisoft/input-http` parameters resolver is needed.
 
 ## Routes
 
@@ -79,9 +80,9 @@ FlagRoutes::PARAM_KEY => [
 - `FlagRoutes::fromParams(array $params): list<Route>` - build routes from `$params[FlagRoutes::PARAM_KEY]`; use inside a `Group`.
 - `FlagRoutes::create(prefix, names, middlewares, withBodyParser): list<Route>` - build the 6 routes with full control (constants `LIST`/`EDIT`/`CREATE`/`STORE`/`UPDATE`/`DELETE`).
 - `Yii\List\Action` - GET grid (sorted by name).
-- `Yii\Edit\Action` - GET edit existing; `::new()` for create form.
-- `Yii\Update\Action` - POST save existing; `::new()` for create.
-- `Yii\Delete\Action` - POST remove.
+- `Yii\Edit\Action` - GET edit existing; `::new()` for create form. Reads `{name}` from injected `CurrentRoute`.
+- `Yii\Update\Action` - POST save existing (`ServerRequestInterface` only); `::new()` for create. Reads `{name}` from injected `CurrentRoute`.
+- `Yii\Delete\Action` - POST remove. Reads `{name}` from injected `CurrentRoute`.
 - `Service\ListFlagsResponder` - builds the list response (read-model + grid).
 - `Service\EditFlagResponder` - renders edit/create form; 404 for unknown name.
 - `Service\UpdateFlagProcessor` - validates + saves; 403 for read-only, re-render on invalid.

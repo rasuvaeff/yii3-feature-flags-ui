@@ -98,6 +98,11 @@ middleware'ы на каждый слот без форкования маршр�
 добавляется автоматически к POST-маршрутам (store, update, delete); установите
 `'body_parser' => false` в params, чтобы отказаться.
 
+Аргумент маршрута `{name}` экшены читают из внедрённого через конструктор
+`Yiisoft\Router\CurrentRoute`, поэтому маршруты работают через обычный
+middleware-диспетчер — `yiisoft/input-http` (резолвер hydrator-атрибутов
+`HydratorAttributeParametersResolver`) в конвейере приложения не нужен.
+
 URL'ы и редиректы генерируются через router (`UrlGeneratorInterface`) по имени
 маршрута; ссылки остаются корректными под любым префиксом или поддоменом.
 Переопределите `route_names` в params, если ваше приложение использует другую

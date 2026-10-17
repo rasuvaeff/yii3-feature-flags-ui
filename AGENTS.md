@@ -90,6 +90,10 @@ make release-check
   (list<FlagPresenter>) so a custom view can build its own grid.
 - CSRF is the application middleware's responsibility; the edit form emits a
   hidden `_csrf` field when a `csrf_token` request attribute is present.
+- Actions take route arguments from a constructor-injected `CurrentRoute`, not
+  from `#[RouteArgument]` hydration — the package must not acquire a hidden
+  `yiisoft/input-http` (`ParametersResolverInterface`) requirement. An absent
+  argument degrades to `''`, which lands on the unknown-name → 404 path.
 - `yiisoft/router` needs a concrete router implementation
   (e.g. `yiisoft/router-fastroute`) — provided by the host app, and as a dev
   dependency here.
