@@ -21,9 +21,10 @@ final class ActionTest extends ActionTestCase
         $renderer = $this->renderer();
         $action = new YiiEditAction(
             responder: $this->editResponder($renderer, $this->writableProvider()),
+            currentRoute: $this->currentRoute(),
         );
 
-        $response = $action->__invoke('checkout.v2');
+        $response = $action->__invoke();
 
         Assert::same($response->getStatusCode(), Status::OK);
         Assert::same($this->renderedView(), 'edit');
@@ -32,11 +33,25 @@ final class ActionTest extends ActionTestCase
         Assert::same($form->name, 'checkout.v2');
     }
 
+    public function invokeWithoutRouteArgumentRespondsNotFound(): void
+    {
+        $renderer = $this->renderer();
+        $action = new YiiEditAction(
+            responder: $this->editResponder($renderer, $this->writableProvider()),
+            currentRoute: $this->currentRoute(name: null),
+        );
+
+        $response = $action->__invoke();
+
+        Assert::same($response->getStatusCode(), Status::NOT_FOUND);
+    }
+
     public function newActionInvokesRespondNew(): void
     {
         $renderer = $this->renderer();
         $action = new YiiEditAction(
             responder: $this->editResponder($renderer, $this->writableProvider()),
+            currentRoute: $this->currentRoute(),
         );
 
         $response = $action->new();

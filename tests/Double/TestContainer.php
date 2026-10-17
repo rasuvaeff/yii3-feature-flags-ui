@@ -24,13 +24,17 @@ final class TestContainer implements ContainerInterface
     /** @var array<string, mixed> */
     private array $explicit;
 
-    public function __construct()
+    /**
+     * @param array<string, mixed> $definitions Additional explicit bindings, merged over the defaults
+     */
+    public function __construct(array $definitions = [])
     {
         $this->explicit = [
             ContainerInterface::class => $this,
             ValidatorInterface::class => new Validator(),
             ValuePresenterInterface::class => new SimpleValuePresenter(),
             FilterFactoryInterface::class => new LikeFilterFactory(),
+            ...$definitions,
         ];
     }
 

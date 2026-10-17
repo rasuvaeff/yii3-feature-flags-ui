@@ -6,7 +6,7 @@ namespace Rasuvaeff\Yii3FeatureFlagsUi\Yii\Edit;
 
 use Psr\Http\Message\ResponseInterface;
 use Rasuvaeff\Yii3FeatureFlagsUi\Service\EditFlagResponder;
-use Yiisoft\Router\HydratorAttribute\RouteArgument;
+use Yiisoft\Router\CurrentRoute;
 
 /**
  * @api
@@ -15,13 +15,12 @@ final readonly class Action
 {
     public function __construct(
         private EditFlagResponder $responder,
+        private CurrentRoute $currentRoute,
     ) {}
 
-    public function __invoke(
-        #[RouteArgument('name')]
-        string $name,
-    ): ResponseInterface {
-        return $this->responder->respondExisting(name: $name);
+    public function __invoke(): ResponseInterface
+    {
+        return $this->responder->respondExisting(name: (string) $this->currentRoute->getArgument('name'));
     }
 
     public function new(): ResponseInterface
