@@ -101,7 +101,10 @@ middleware'ы на каждый слот без форкования маршр�
 Аргумент маршрута `{name}` экшены читают из внедрённого через конструктор
 `Yiisoft\Router\CurrentRoute`, поэтому маршруты работают через обычный
 middleware-диспетчер — `yiisoft/input-http` (резолвер hydrator-атрибутов
-`HydratorAttributeParametersResolver`) в конвейере приложения не нужен.
+`HydratorAttributeParametersResolver`) в конвейере приложения не нужен. (Форма
+маршрутов `->action(SomeAction::class)`, которую поставляет пакет, требует
+`yiisoft/middleware-dispatcher` 5.2+ — он резолвится в любом актуальном
+приложении на `yiisoft/router`.)
 
 URL'ы и редиректы генерируются через router (`UrlGeneratorInterface`) по имени
 маршрута; ссылки остаются корректными под любым префиксом или поддоменом.

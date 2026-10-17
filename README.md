@@ -95,7 +95,10 @@ return [
 The `{name}` route argument is read by the actions from a constructor-injected
 `Yiisoft\Router\CurrentRoute`, so the routes work through a plain middleware
 dispatcher — no `yiisoft/input-http` hydrator-attribute parameters resolver
-(`HydratorAttributeParametersResolver`) is required in your pipeline.
+(`HydratorAttributeParametersResolver`) is required in your pipeline. (The
+`->action(SomeAction::class)` route form the package ships needs
+`yiisoft/middleware-dispatcher` 5.2+, which every current `yiisoft/router`
+application resolves.)
 
 URLs and redirects are generated through the router (`UrlGeneratorInterface`) by route name; links stay correct under any prefix or subdomain. Override `route_names` in params when your app uses a different naming convention.
 

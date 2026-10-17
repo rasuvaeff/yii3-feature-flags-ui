@@ -52,6 +52,7 @@
         "testo/bridge-infection": "^0.1.6",
         "testo/testo": "^0.10.25",
         "vimeo/psalm": "^6.16",
+        "yiisoft/middleware-dispatcher": "^5.2",
         "yiisoft/router-fastroute": "^4.0"
     },
     "autoload": {
