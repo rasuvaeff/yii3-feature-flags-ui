@@ -184,6 +184,65 @@ final class ViewRenderingTest
         Assert::string($editHtml)->contains('EDIT OVERRIDE');
     }
 
+    public function explicitLayoutWinsOverDefaultLayoutInViewPath(): void
+    {
+        $basePath = $this->tempViews();
+        file_put_contents($basePath . '/_layout-standalone.php', '<?php declare(strict_types=1); ?>DEFAULT <?= $content ?>');
+        file_put_contents($basePath . '/_layout-custom.php', '<?php declare(strict_types=1); ?>CUSTOM <?= $content ?>');
+        file_put_contents($basePath . '/page.php', '<?php declare(strict_types=1); ?>BODY');
+
+        $html = (string) $this->renderer(viewPath: $basePath, layout: $basePath . '/_layout-custom.php')
+            ->render('page')
+            ->getBody();
+
+        Assert::same($html, 'CUSTOM BODY');
+    }
+
+    public function defaultLayoutIsTakenFromViewPath(): void
+    {
+        $basePath = $this->tempViews();
+        file_put_contents($basePath . '/_layout-standalone.php', '<?php declare(strict_types=1); ?>DEFAULT <?= $content ?>');
+        file_put_contents($basePath . '/page.php', '<?php declare(strict_types=1); ?>BODY');
+
+        $html = (string) $this->renderer(viewPath: $basePath)->render('page')->getBody();
+
+        Assert::same($html, 'DEFAULT BODY');
+    }
+
+    public function absoluteConfiguredViewIsUsedAsIs(): void
+    {
+        $basePath = $this->tempViews();
+        $elsewhere = $this->tempViews();
+        file_put_contents($basePath . '/_layout-standalone.php', '<?php declare(strict_types=1); ?><?= $content ?>');
+        file_put_contents($elsewhere . '/other.php', '<?php declare(strict_types=1); ?>ABSOLUTE');
+
+        $html = (string) $this->renderer(viewPath: $basePath, views: ['page' => $elsewhere . '/other.php'])
+            ->render('page')
+            ->getBody();
+
+        Assert::same($html, 'ABSOLUTE');
+    }
+
+    public function viewNameKeepsItsOwnExtension(): void
+    {
+        $basePath = $this->tempViews();
+        file_put_contents($basePath . '/_layout-standalone.php', '<?php declare(strict_types=1); ?><?= $content ?>');
+        file_put_contents($basePath . '/page.tpl', '<?php declare(strict_types=1); ?>TPL');
+        file_put_contents($basePath . '/page.php', '<?php declare(strict_types=1); ?>PHP');
+
+        $html = (string) $this->renderer(viewPath: $basePath)->render('page.tpl')->getBody();
+
+        Assert::same($html, 'TPL');
+    }
+
+    private function tempViews(): string
+    {
+        $path = sys_get_temp_dir() . '/yii3-feature-flags-ui-' . bin2hex(random_bytes(4));
+        mkdir($path, 0o777, true);
+
+        return $path;
+    }
+
     /**
      * @return array<string, mixed>
      */

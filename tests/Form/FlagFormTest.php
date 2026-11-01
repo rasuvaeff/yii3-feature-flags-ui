@@ -47,6 +47,14 @@ final class FlagFormTest
         Assert::same($form->environments, '');
     }
 
+    public function absentWhenBodyIsObject(): void
+    {
+        $form = FlagForm::fromParsedBody(new \stdClass());
+
+        Assert::false($form->present);
+        Assert::same($form->name, '');
+    }
+
     public function absentWhenScopeMissing(): void
     {
         $form = FlagForm::fromParsedBody(['Other' => ['name' => 'x']]);

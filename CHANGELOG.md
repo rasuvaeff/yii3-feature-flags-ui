@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Mutation testing now counts code the tests execute without naming it in `#[Covers]`
+  (`infection --with-uncovered`), with `PublicVisibility` off and signature defaults ignored
+  as in the monorepo template; overall MSI 95%. Two validation message tests added; no `src/` changes.
+
 ## 2.0.0 — 2026-10-17
 
 - Actions no longer read their route argument through the `#[RouteArgument]`

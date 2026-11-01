@@ -20,7 +20,10 @@ use Testo\Codecov\Covers;
 use Testo\Lifecycle\BeforeTest;
 use Testo\Test;
 use Yiisoft\User\CurrentUser;
+use Yiisoft\Validator\Result;
+use Yiisoft\Validator\ValidationContext;
 use Yiisoft\Validator\Validator;
+use Yiisoft\Validator\ValidatorInterface;
 
 use function Rasuvaeff\Understudy\verify;
 
@@ -150,6 +153,37 @@ final class UpdateFlagProcessorTest extends ActionTestCase
         );
 
         Assert::same($response->getStatusCode(), Status::OK);
+        verify(fn() => $this->provider->save(Arg::any()), never: true);
+    }
+
+    public function flagRejectedByNormalizerReRendersWithError(): void
+    {
+        $acceptAll = new class implements ValidatorInterface {
+            #[\Override]
+            public function validate(
+                mixed $data,
+                callable|iterable|object|string|null $rules = null,
+                ?ValidationContext $context = null,
+            ): Result {
+                return new Result();
+            }
+        };
+        $processor = new UpdateFlagProcessor(
+            provider: $this->provider,
+            responseFactory: $this->http,
+            urls: $this->urls(),
+            editPage: $this->editPage($this->renderer),
+            validator: $acceptAll,
+            normalizer: new FlagFormNormalizer(),
+        );
+
+        $response = $processor->processExisting(
+            'checkout.v2',
+            $this->request('POST', parsedBody: ['Flag' => ['name' => 'checkout.v2', 'rollout' => '500']]),
+        );
+
+        Assert::same($response->getStatusCode(), Status::OK);
+        Assert::string($this->renderedParameters()['error'])->contains('Rollout percentage');
         verify(fn() => $this->provider->save(Arg::any()), never: true);
     }
 

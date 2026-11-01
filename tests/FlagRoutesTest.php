@@ -164,6 +164,21 @@ final class FlagRoutesTest
         Assert::contains($routes[5]->getData('enabledMiddlewares'), $delete);
     }
 
+    public function middlewaresWithStringKeysAreAllKept(): void
+    {
+        $all = static fn(): string => 'mw-all';
+        $list = static fn(): string => 'mw-list';
+
+        $routes = FlagRoutes::create(middlewares: [
+            'all' => ['same' => $all],
+            'list' => ['same' => $list],
+        ]);
+
+        $enabled = $routes[0]->getData('enabledMiddlewares');
+        Assert::contains($enabled, $all);
+        Assert::contains($enabled, $list);
+    }
+
     public function storeRouteFallsBackToCreateMiddlewareWhenStoreAbsent(): void
     {
         $create = static fn(): string => 'mw-create';
