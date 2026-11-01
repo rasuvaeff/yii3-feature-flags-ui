@@ -139,6 +139,22 @@ final class FlagFormRulesTest
         yield 'array with empty string' => ['[""]'];
     }
 
+    public function nonStringEnvironmentsShowsArrayOfStringsMessage(): void
+    {
+        $result = $this->validateField('environments', ['prod']);
+
+        Assert::false($result->isValid());
+        Assert::same($result->getErrorMessages(), ['Environments must be a JSON array of strings']);
+    }
+
+    public function invalidJsonEnvironmentsShowsValidJsonMessage(): void
+    {
+        $result = $this->validateField('environments', 'not-json');
+
+        Assert::false($result->isValid());
+        Assert::same($result->getErrorMessages(), ['Environments must be valid JSON']);
+    }
+
     private function validateField(string $field, mixed $value): \Yiisoft\Validator\Result
     {
         $rules = [$field => FlagFormRules::all()[$field]];
