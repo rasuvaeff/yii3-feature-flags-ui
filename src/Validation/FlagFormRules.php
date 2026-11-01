@@ -51,7 +51,7 @@ final readonly class FlagFormRules
 
                     $trimmed = trim((string) $value);
 
-                    return ctype_digit($trimmed) && (int) $trimmed >= 0 && (int) $trimmed <= 100
+                    return ctype_digit($trimmed) && (int) $trimmed <= 100
                         ? new Result()
                         : self::error('Rollout must be an integer between 0 and 100');
                 }),

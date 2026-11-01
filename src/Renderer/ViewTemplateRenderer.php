@@ -51,6 +51,6 @@ final readonly class ViewTemplateRenderer implements TemplateRendererInterface
             return $configuredView;
         }
 
-        return $this->viewPath . '/' . ltrim($configuredView, '/');
+        return $this->viewPath . '/' . $configuredView;
     }
 }

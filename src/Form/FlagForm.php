@@ -22,7 +22,15 @@ use Yiisoft\Validator\RulesProviderInterface;
  */
 final class FlagForm extends FormModel implements RulesProviderInterface
 {
-    public function __construct(public bool $present = false, public string $name = '', public bool $enabled = false, public string $rollout = '100', public string $salt = '', public bool $killSwitch = false, public string $environments = '') {}
+    public function __construct(
+        public bool $present = false,
+        public string $name = '',
+        public bool $enabled = false,
+        public string $rollout = '100',
+        public string $salt = '',
+        public bool $killSwitch = false,
+        public string $environments = '',
+    ) {}
 
     public static function fromParsedBody(array|object|null $body): self
     {
