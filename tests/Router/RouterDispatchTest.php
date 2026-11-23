@@ -151,7 +151,7 @@ final class RouterDispatchTest
             currentRoute: $currentRoute,
         );
 
-        return $router->process($request, new class ($http) implements RequestHandlerInterface {
+        return $router->process($request, new readonly class ($http) implements RequestHandlerInterface {
             public function __construct(
                 private ResponseFactoryInterface $responseFactory,
             ) {}
