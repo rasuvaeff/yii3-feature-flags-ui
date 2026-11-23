@@ -43,13 +43,9 @@ final class FlagForm extends FormModel implements RulesProviderInterface
             return new self();
         }
 
-        /** @var mixed $name */
         $name = $scope['name'] ?? '';
-        /** @var mixed $rollout */
         $rollout = $scope['rollout'] ?? '100';
-        /** @var mixed $salt */
         $salt = $scope['salt'] ?? '';
-        /** @var mixed $environments */
         $environments = $scope['environments'] ?? '';
 
         return new self(
