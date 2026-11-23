@@ -43,19 +43,14 @@ final class FlagForm extends FormModel implements RulesProviderInterface
             return new self();
         }
 
-        $name = $scope['name'] ?? '';
-        $rollout = $scope['rollout'] ?? '100';
-        $salt = $scope['salt'] ?? '';
-        $environments = $scope['environments'] ?? '';
-
         return new self(
             present: true,
-            name: \is_string($name) ? $name : '',
+            name: self::asString($scope['name'] ?? null),
             enabled: self::toBool($scope['enabled'] ?? null),
-            rollout: \is_string($rollout) ? $rollout : (string) $rollout,
-            salt: \is_string($salt) ? $salt : (string) $salt,
+            rollout: (string) ($scope['rollout'] ?? '100'),
+            salt: (string) ($scope['salt'] ?? ''),
             killSwitch: self::toBool($scope['killSwitch'] ?? null),
-            environments: \is_string($environments) ? $environments : '',
+            environments: self::asString($scope['environments'] ?? null),
         );
     }
 
@@ -63,6 +58,11 @@ final class FlagForm extends FormModel implements RulesProviderInterface
     public function getRules(): iterable
     {
         return FlagFormRules::all();
+    }
+
+    private static function asString(mixed $value): string
+    {
+        return \is_string($value) ? $value : '';
     }
 
     private static function toBool(mixed $value): bool
