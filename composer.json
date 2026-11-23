@@ -36,7 +36,7 @@
         "yiisoft/request-body-parser": "^1.2",
         "yiisoft/router": "^3.1 || ^4.0",
         "yiisoft/user": "^2.0",
-        "yiisoft/validator": "^2.5",
+        "yiisoft/validator": "^2.6.2",
         "yiisoft/yii-dataview": "^1.1",
         "yiisoft/yii-view-renderer": "^7.4"
     },
